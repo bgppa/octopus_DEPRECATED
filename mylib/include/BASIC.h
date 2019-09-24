@@ -7,7 +7,7 @@
 
 /* Print to the screen/file a matrix A of dimension n x m, then newline */
 void printMat(const double* A, int n, int m);
-void fprintMat (FILE* F, const double* A, int n, int m){
+void fprintMat (FILE* F, const double* A, int n, int m);
 
 /* Pront to the screen/file a vector of dimension a, followed by newline */
 void printVec(const double* v, int n);

@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<math.h>
 #include<stdlib.h>
+#include<assert.h>
 #include"LINLIB.h"
 #include"BASIC.h"
 
@@ -323,16 +324,16 @@ void invmat(const double* A, double* B, int n,\
  * Then you can use the data in C and d to solve the system equivalently.
  * the interger d is the dimension of b, which is also the matrix's dimension
  * (A is assumed to be square of dimension d * d) */
-void linsym(const double* A, const double*b, double* C, double* d, int d){
+void linsym(const double* A, const double*b, double* C, double* d, int dim){
 	assert(A != NULL);
 	assert(b != NULL);
 	assert(C != NULL);
 	assert(d != NULL);
-	assert(d > 0);
+	assert(dim > 0);
 
-	double* AT = malloc(sizeof(double) * d * d);
-	transp(A, AT, d, d);
-	matmul(AT, A, C, d, d, d);
-	axiny(AT, b, d, d);
+	double* AT = malloc(sizeof(double) * dim * dim);
+	transp(A, AT, dim, dim);
+	matmul(AT, A, C, dim, dim, dim);
+	axiny(AT, b, d, dim);
 	free(AT);
 }    

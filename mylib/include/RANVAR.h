@@ -61,8 +61,7 @@ void ndim_gaussian(double* m, double* A, int d, double* res, int verbose);
  * max_jump: maximum amount of jumps that are expected to happen. Can be set
  * huge - no consequences - but smaller spares memory;
  * container: Stochastic Process variable where to store the results */ 
-int rndm_point_poisson(double lam, double max_time, int time_steps, \
-	int max_jumps, Stproc* container);
+int rndm_point_poisson(double lam, double max_time, int time_steps,	int max_jumps, Stproc* container);
 
 /* Clearly, many other kind of variables must be added! */
 

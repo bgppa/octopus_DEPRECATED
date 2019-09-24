@@ -2,12 +2,13 @@
  * kind of RANdom VARiables and stochastic processes. It will be
  * constantly uploaded accordingly to the author's practical
  * needed. */
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <math.h>
-#include "BASIC.h"
-#include "RANVAR.h"
+#include<stdio.h>
+#include<math.h>
+#include<stdlib.h>
+#include<math.h>
+#include<assert.h>
+#include"BASIC.h"
+#include"RANVAR.h"
 
 /* The requirement for this library are given only by basic linear
  * algebra operations. It contains various sections, then described */
@@ -42,7 +43,7 @@ void resetStproc(Stproc* myprocessPtr){
 
 	myprocessPtr->val = NULL;
 	myprocessPtr->t = NULL;
-	myprocesssPtr->len = 0;
+	myprocessPtr->len = 0;
 }
 
 /* Free and reset a structure Stproc */
@@ -90,7 +91,7 @@ double rndm_uniform_in(double a, double b){
     if(a < b)
         return a + rndm_uniform()*(b-a);
     else{
-        printf("rndm_uniform_in: interval [%lf, %lf),",\
+        printf("rndm_uniform_in: interval [%lf, %lf)" 
 		" but %lf >= %lf!\n", a, b, a, b);
         return 0;
     }
@@ -251,8 +252,7 @@ void ndim_gaussian(double* m, double* C, int d, double* res, int verbose){
  * max_jump: maximum amount of jumps that are expected to happen. Can be set
  * huge - no consequences - but smaller spares memory;
  * container: Stochastic Process variable where to store the results */
-int rndm_point_poisson(double lam, double max_time, int time_steps,\
-		int max_jumps, Stproc* container){
+int rndm_point_poisson(double lam, double max_time, int time_steps, int max_jumps, Stproc* container){
 	if(lam <= 0){
 		printf("Error: lambda must be positive\n");
 		return 0;
@@ -317,8 +317,7 @@ int rndm_point_poisson(double lam, double max_time, int time_steps,\
 					break;
                			}
 				else if(n == max_jumps-1){
-					printf("*ERROR: max_jumps too small.\n",\
-					 max_jumps);
+					printf("*ERROR: max_jumps %d too small.\n",  max_jumps);
 					return 0;
                			}
            		}

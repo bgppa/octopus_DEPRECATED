@@ -64,8 +64,8 @@ void fprintVec(FILE* F, const double* v, int d){
 	assert(d > 0);
 
 	for(int i=0; i<d; ++i)
-		fprintf(file, "%.3e ", v[i]);
-	fprintf(file, "\n");
+		fprintf(F, "%.3e ", v[i]);
+	fprintf(F, "\n");
 }
 
 
@@ -333,20 +333,23 @@ int isequaltol(const double *v, const double *w, int d, double tol){
 	assert(tol > 0);
 
 	double sum=0.;
-	for(int i=0; i<d; ++i)
+	for(int i=0; i<d; ++i){
 		sum += (v[i]-w[i])*(v[i]-w[i]);
-		if(sqrt(sum) < tol)
-			return 1;
-	return 0;
+	}
+	if(sqrt(sum) < tol)
+		return 1;
+	else
+		return 0;
 }
 
 /* Check if two vector are equal by using the default EPS value
  * You can give a matrix a parameter, assuming d = n x m */
 int isequal(const double *v, const double *w, int d){
 	#ifdef EPS
-		isequaltol(v, w, d, EPS);
+		return(isequaltol(v, w, d, EPS));
 	#else
 		printf("EPS not defined!\n");
 		return 0;
+	#endif
 }
 
