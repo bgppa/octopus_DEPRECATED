@@ -16,8 +16,29 @@
  * x_1 : point in R^n which contains the result of the monte carlo iterations
  * By repeating this procedure multiple times, the solution to the problem is given by the most frequent sample */
 
-void multidim_pCN(double* prior_mean, double* prior_diag_variance, void(*G)(const double*,int,double*,int), int ITER_NUM, \
-					double* y, double eta, double beta, int dn, int dm, double**tmp, double* x_0, double* x_1);
+void multidim_pCN(double* prior_mean, double* prior_diag_variance, void(*G)(const double*,int,double*,int), int ITER_NUM, double* y, double eta, double beta, int dn, int dm, double**tmp, double* x_0, double* x_1);
+
+
+
+/* ----------------- NEW PART ------------- */
+
+/* The following function check the validiy of parameters
+ * that are supposed to be used with pcnMcmc */ 
+int checkPcnParameters(double* C,
+                       void(*G)(const double*,int,double*,int),
+                       int ITER_NUM,
+                       double* y,
+                       double eta,
+                       double beta,
+                       int dn,
+                       int dm,
+                       double** tmp, 
+                       double* x0,
+                       double* x1,
+                       int verbose);
+
+
+	 
 
 #endif
 

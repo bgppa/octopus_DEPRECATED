@@ -82,25 +82,25 @@ void fprintStproc(const char* filename, Stproc process){
  * various kind of Random Variables */
 
 /* Uniform double in the range [0,1) */
-double rndm_uniform(void){
+double rndmUniform(void){
 		return (double) rand() / RAND_MAX;
 }
 
 /* Return a random real in the interval [a, b) */
-double rndm_uniform_in(double a, double b){
+double rndmUniformIn(double a, double b){
     if(a < b)
-        return a + rndm_uniform()*(b-a);
+        return a + rndmUniform()*(b-a);
     else{
-        printf("rndm_uniform_in: interval [%lf, %lf)" 
+        printf("rndmUniformIn: interval [%lf, %lf)" 
 		" but %lf >= %lf!\n", a, b, a, b);
         return 0;
     }
 }
 
 /* Exponential distribution with average lambda = lam */
-double rndm_exp(double lam){
+double rndmExp(double lam){
 	if(lam > 0){
-		return - log(rndm_uniform()) / lam;
+		return - log(rndmUniform()) / lam;
 	}
 	else{
 		printf("Error: lambda must be positive!\n");
@@ -110,7 +110,7 @@ double rndm_exp(double lam){
 
 /* One-dimensional gaussian with normal and variance.
 * The followed method is decribed in <Stochastic Simulation> by Amussen-Glynn */
-double rndm_gaussian(double mean, double variance){
+double rndmGaussian(double mean, double variance){
 	if(variance > 0){
 		double P0 = -0.322232431088;
 		double P1 = -1;
@@ -122,7 +122,7 @@ double rndm_gaussian(double mean, double variance){
 		double Q2 = 0.531103462366;
 		double Q3 = 0.10353775285;
 		double Q4 = 0.0038560700634;
-		double u = rndm_uniform();
+		double u = rndmUniform();
 		double y = sqrt(-2.0 * log(1.0 - u));
 		double NUM = P0 + P1*y + P2*y*y + P3*y*y*y + P4*y*y*y*y;
 		double DEN = Q0 + Q1*y + Q2*y*y + Q3*y*y*y + Q4*y*y*y*y;
@@ -138,11 +138,24 @@ double rndm_gaussian(double mean, double variance){
  * matrix C, stores in res a d-dimensional gaussian sample.
  * The method followed is from the Leray's Monte Carlo book.
  * The verbose option is meant for debugging purposes */
-void ndim_gaussian(double* m, double* C, int d, double* res, int verbose){
-	assert(m != NULL);
+void rndmNdimGaussian(double* m, double* C, int d, double* res, int verbose){
 	assert(C != NULL);
 	assert(res != NULL);
 	assert(d > 0);
+
+
+	int i, j, k;
+	int to_free = 0;
+
+	/* Passing a null mean pointer implies setting
+	 * the mean like zero */
+	if(m == NULL){
+		m = malloc(sizeof(double) * d);
+		for(i = 0; i<d; ++i){
+			m[i] = 0;
+		}
+		to_free = 1;
+	}
 
 	if(verbose){
 		printf("Covariance matrix:\n");
@@ -154,7 +167,6 @@ void ndim_gaussian(double* m, double* C, int d, double* res, int verbose){
 	 * being a literal adaptation to Leray's proposition explained
 	 * well in the mathematical reference */
 	double* sig = malloc(sizeof(double)*d*d);
-	int i, j, k;
 	double tmp;
 	/* In order to initialize sigma, set it all to -1.: just a signal; */
 	for(i=0; i<d; ++i){
@@ -227,7 +239,7 @@ void ndim_gaussian(double* m, double* C, int d, double* res, int verbose){
 	 * gaussian, needed for the algorithm*/
 	double*y = malloc(sizeof(double)*d);
 	for(i=0; i<d; ++i){
-		y[i] = rndm_gaussian(0., 1.);
+		y[i] = rndmGaussian(0., 1.);
 	}
 
 	/* According to the algorithm, the final multidimensional
@@ -240,6 +252,9 @@ void ndim_gaussian(double* m, double* C, int d, double* res, int verbose){
 	/* So at the end: res = m + sig*y, as requested */
 	free(y);
 	free(sig);
+	if(to_free){
+		free(m);
+	}
 }
 
 
@@ -252,7 +267,7 @@ void ndim_gaussian(double* m, double* C, int d, double* res, int verbose){
  * max_jump: maximum amount of jumps that are expected to happen. Can be set
  * huge - no consequences - but smaller spares memory;
  * container: Stochastic Process variable where to store the results */
-int rndm_point_poisson(double lam, double max_time, int time_steps, int max_jumps, Stproc* container){
+int rndmPointPoisson(double lam, double max_time, int time_steps, int max_jumps, Stproc* container){
 	if(lam <= 0){
 		printf("Error: lambda must be positive\n");
 		return 0;
@@ -278,10 +293,10 @@ int rndm_point_poisson(double lam, double max_time, int time_steps, int max_jump
 	 * These two variables follows the relation:
 	 * T[i] = sum of all S[i] with smaller i.
          * so initialize them accordingly*/
-	S[0] = T[0] = rndm_exp(lam);
+	S[0] = T[0] = rndmExp(lam);
 	int i;
 	for(i=1; i<max_jumps; ++i){
-		S[i] = rndm_exp(lam);
+		S[i] = rndmExp(lam);
 		T[i] = T[i-1] + S[i];
 	}
 
