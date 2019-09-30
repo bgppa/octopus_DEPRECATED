@@ -111,6 +111,20 @@ double nrm2(const double* x, int d){
 	return sqrt(dot(x,x,d));
 }
 
+/* l2 distance between two vectors */
+double nrm2dist(const double* v1, const double* v2, int d){
+	assert(v1 != NULL);
+	assert(v2 != NULL);
+	assert(d > 0);
+	
+	double sum=0;
+	int i=0;
+	for(i=0; i<d; ++i){
+		sum += pow(v1[i] - v2[i], 2.);
+	}
+	return sqrt(sum);
+}
+
 /* l1 norm of a vector of dimension d */
 double nrm1(const double* x, int d){
 	assert(x != NULL);

@@ -4,7 +4,12 @@
 #include<assert.h>
 #include "RANVAR.h"
 #include "BASIC.h"
+#include "KMEAN.h"
 
+/* Let's try to completely remove the old pCN implementation
+ * in favor of a more complete one */
+
+#if 0
 void multidim_pCN(double* prior_mean, double* prior_diag_variance, void(*G)(const double*,int,double*,int), int ITER_NUM, \
 					double* y, double eta, double beta, int dn, int dm, double**tmp, double* x_0, double* x_1){
 		/* prior_mean and _variance are the parameters for the prior Gaussian distribution on R^dn
@@ -119,6 +124,7 @@ void multidim_pCN(double* prior_mean, double* prior_diag_variance, void(*G)(cons
 		} /* End of for: at this point the vector x_1 contain a sample from the target measure */
 }
 
+#endif
 
 
 
@@ -150,10 +156,8 @@ int checkPcnParameters(double* C,
                        int dm,
                        double** tmp, 
                        double* x0,
-                       double* x1,
-                       int verbose){
+                       double* x1){
 
-	assert(P != NULL);
 	assert(C != NULL);
 	assert(G != NULL);
 	assert(ITER_NUM > 0);
@@ -185,10 +189,10 @@ int checkPcnParameters(double* C,
  * x1 : point in R^n; output value; at the end will contain the MC result
  * verbose : integer that enables a debug mode */
 
-void pcnMcmc(double* C,
+void pcnMcmc(const double* C,
              void(*G)(const double*,int,double*,int),
              int ITER_NUM,
-             double* y,
+             const double* y,
              double eta,
              double beta,
              int dn,
@@ -205,33 +209,42 @@ void pcnMcmc(double* C,
 
 	/* Perform ITER_NUM steps */
 	for(i=0; i < ITER_NUM; ++i){
-		/* New step: balance between the prior gaussian and the previous point x0 */
-		/* Start by sampling x1 as a 0-mean dn-dimensional gaussian
-		 * with covariance matrix C */
+		/* Key rule to keep in mind:
+		 * x0 represents the previous point in every step,
+		 * while x1 is the new proposal
+		 * The preposed x1 follows the rules here discribed: 
+		 * 1) start by sampling x1 as a 0-mean (so, NULL) 
+		 * dn-dimensional gaussian
+		 * with covariance matrix C. No verbose mode (0 last param) */
 		rndmNdimGaussian(NULL, C, dn, x1, 0);
-		/* Now balance x1 according to the weight beta and x0 */
+		/* 2) balance x1 w.r.t. previous x0 according to the weight beta */
 		for(k=0; k<dn; ++k){
 			x1[i] = beta*x1[i] + sqrt(1.0 - beta*beta) * x0[i];
 		}
 
-		/* Compute the potentials used in the Metropolis acceptance rate */
-		G(x0, dn, tmp[0], dm); /* Put in tmp[0] the evaluation of G(x0) */
-		G(x1, dn, tmp[1], dm); /* Put in tmp[1] the evaluation of G(x1) */
+		/* Compute the potentials used in the Metropolis acceptance rate,
+		 * whose results determine the acceptance of x1 */
 
+		/* Put in tmp[0] the evaluation of G(x0) */
+		G(x0, dn, tmp[0], dm);
 		/* Copy tmp[0] into tmp[2] */
 		copy(tmp[0], tmp[2], dm);
-		/* perform then: tmp[2] = y - tmp[2]
-		 * i.e.: tmp[2] = y - tmp[0] as required */
+		/* Perform then: tmp[2] = y - tmp[2]
+		 * i.e.: tmp[2] = y - tmp[0] = y - G(x0) as required */
 		diff(y, tmp[2], dm);
 
-		/* Repeat the same reasoning for tmp[3] */
+		/* Put in tmp[1] the evaluation of G(x1) */
+		G(x1, dn, tmp[1], dm);	
+		/* Repeat the same reasoning as before, with tmp[3] */
 		copy(tmp[1], tmp[3], dm);
+		/* So now tmp[3] = y - G(x1) */
 		diff(y, tmp[3], dm);
 
 		/* So:  tmp[0] evaluation of G in x0
 		 *	tmp[1] evaluation of G in x1
 		 * 	tmp[2] (componentwise) difference between y and G(x0)
 		 * 	tmp[3] (componentwise) difference between y and G(x1)*/
+
 		/* Compute the logarithm of the acceptance rate alpha */
 		log_alpha = (nrm2(tmp[2],dm) - nrm2(tmp[3],dm)) / (2.0*eta*eta);
 
@@ -258,7 +271,7 @@ void pcnMcmc(double* C,
 		}
 
 		/* Accept the new point if the rate is enough */
-		if (log(rndm_uniform()) <= log_alpha){
+		if (log(rndmUniform()) <= log_alpha){
 			if(verbose){
 				printf("FROM ");
 				printVec(x0,dn);
@@ -266,13 +279,10 @@ void pcnMcmc(double* C,
 				printVec(x1, dn);
 				printf("accepted!\n");
 			}
-			/* The point is accepted: copy in x0 the value from x1
-			 * and start again the cycle */
+			/* The point is accepted: copy in x0 the value of x1,
+			 * since it becomes now the new starting point.
+			 * Start then the cycle again */
 			copy(x0, x1, dn);
-			/* Maybe, can now use the function copy, from BASIC.h? */
-			//			for(int i=0; i<dn; ++i)
-			//					x0[i] = x1[i];
-
 		} /* end if log() <= log_alpha */
 		else {
 			if(verbose){
@@ -284,8 +294,136 @@ void pcnMcmc(double* C,
 				printf("refused.\n");
 			}
 		}
+
 		if(verbose){ /* The verbose stops at every cycle */
 			getchar();
 		}
 	} /* End: now x1 contains a single sample from the target measure */
 }
+
+
+/* Try to implement an automatized Bayesian Inversion algorithm */
+/* Key point: every pcnMcmc is now repeated multiple times,
+ * the resulting distribution is the posterior distribution.
+ * The most frequent point is returned as a solution, while, if a name
+ * file is specified, this posterior distributon is written on a file */
+
+double bayesianInversion(int SAMPLES,
+			int MCMC_ITER,
+			double* MAP,
+			const double* true_params,
+			void(*operator)(const double*,int,double*,int),
+			const double* observed_data,
+			int domain_dim,
+			int codomain_dim,
+			double noise_var,
+			double beta,
+			const double* covariance_step,
+			double* starting_point,
+			FILE* posterior_file,
+			int verbose){
+
+	int i = 0;
+	
+	/* Four tmp are used for technical switces during pcn monte carlo */
+	double** tmp_for_mcmc = malloc(sizeof(double*) * 4);
+	for(i=0; i<4; ++i){
+		tmp_for_mcmc[i] = malloc(sizeof(double) * codomain_dim);
+	}
+	
+	/* Here I'll write all the results of my pcn MCMC
+	 * total amount of points = SAMPLES
+	 * each of dimension domain_dim */
+	double* posterior_points = malloc(sizeof(double)*SAMPLES*domain_dim);
+	/* Omit now the check */
+
+	/* Sample from MCMC a number of times equal to SAMPLES */
+	for(i=0; i<SAMPLES; ++i){
+		pcnMcmc(covariance_step,
+			operator,
+			MCMC_ITER,
+		        observed_data,
+			noise_var,
+			beta,
+			domain_dim,
+			codomain_dim,
+			tmp_for_mcmc,
+			starting_point,
+			posterior_points+i*domain_dim,
+			verbose);
+	}
+
+	/* Ok, now posterior_points should contain the list of all
+	 * the sampled points! */
+	
+	if(verbose){
+		printf("--- %d samples have been generated --- \n", SAMPLES);
+		getchar();
+		printMat(posterior_points, SAMPLES, domain_dim);
+		printf(" - - - - - - - - - - - - - - - - - - - - \n");
+		getchar();	
+	}
+
+	/* Method 1: use the python script */
+	/* --- TO IMPLEMENT ---- */
+	
+	/* Method 2: use directly my C k-means function to elaborate data */
+
+	int centroid_num = (int) sqrt(SAMPLES);
+	int max_iteration_for_kmeans = 1000;
+	kMean(posterior_points, SAMPLES, domain_dim, centroid_num,  
+		posterior_file, max_iteration_for_kmeans, MAP);
+
+	/* Ok, now the posterior with frequncies has been written to
+	 * the given file (directly with frequencies), and the MAP
+	 * estimator has been saved into MAP */
+	if(verbose){
+		printf("\nEstimated MAP: \n");
+		printVec(MAP, domain_dim);
+	}
+	
+	
+	/* If the user known the true parameters, e.g. he is working with
+	 * toy-model data, the true relative error can be computed */
+	if(true_params != NULL){
+		double err = nrm2dist(MAP, true_params, domain_dim) * 100.;
+		printf("ERR: %.3f%%\n", err / nrm2(true_params, domain_dim) );
+	}
+	
+	double* MAP_output = malloc(sizeof(double) * codomain_dim);
+	operator(MAP, domain_dim, MAP_output, codomain_dim);
+
+	/* So MAP_output contains the output generated by the operator when
+	 * the MAP, i.e. the most frequent parameters estimated with the
+	 * bayesian technique, are set as input. It can be used to compute
+	 * the residual error: */
+	double res = nrm2dist(MAP_output, observed_data, codomain_dim) * 100.;
+	printf("RES: %.3f%%\n", res / nrm2(observed_data, codomain_dim) );
+
+	free(MAP_output);
+	for(i=0; i<4; ++i){
+		free(tmp_for_mcmc[i]);
+	}
+	free(tmp_for_mcmc);
+
+	return res;
+}
+
+	
+#if 0
+int readPoints(char* file_name, double* list_of_points, int dim_each, int lines){
+        FILE* file = fopen(file_name, "r");
+        if(file == NULL){
+                printf("*error* unable to open %s\n", file_name);
+                return 0;
+        }
+        else{
+                int n=0;
+                for(n=0; n < dim_each*lines; ++n){
+                        fscanf(file, "%lf", list_of_points+n);
+                }
+                fclose(file);
+                return 1;
+        }
+}
+#endif

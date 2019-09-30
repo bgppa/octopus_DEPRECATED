@@ -138,7 +138,7 @@ double rndmGaussian(double mean, double variance){
  * matrix C, stores in res a d-dimensional gaussian sample.
  * The method followed is from the Leray's Monte Carlo book.
  * The verbose option is meant for debugging purposes */
-void rndmNdimGaussian(double* m, double* C, int d, double* res, int verbose){
+void rndmNdimGaussian(double* m, const double* C, int d, double* res, int verbose){
 	assert(C != NULL);
 	assert(res != NULL);
 	assert(d > 0);

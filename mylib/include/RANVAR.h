@@ -50,7 +50,7 @@ double rndmGaussian(double mean, double variance);
 /* Given a d-dimensional mean m, a covariance matrix A 
  * of dimension d * d, produces a d-dim gaussian sample stored in res.
  * Passing a NULL m implies zero mean */ 
-void rndmNdimGaussian(double* m, double* A, int d, double* res, int verbose);
+void rndmNdimGaussian(double* m, const double* A, int d, double* res, int verbose);
 
 
 /* ---- PART 3: Stochastic processes ---- */

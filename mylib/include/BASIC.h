@@ -25,6 +25,9 @@ double dot(const double* x, const double *y, int d);
 /* l2 norm of a vector of dimension n */
 double nrm2(const double* x, int d);
 
+/* l2 distance beteen two vectors */
+double nrm2dist(const double* v1, const double* v2, int d);
+
 /* l1 norm of a vector of dimension n */
 double nrm1(const double* x, int d);
 

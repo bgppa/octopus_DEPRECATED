@@ -15,8 +15,10 @@
  * tmp is an array of pointers ALREADY initialized, used for operations in between (avoiding so to call malloc multiple times)
  * x_1 : point in R^n which contains the result of the monte carlo iterations
  * By repeating this procedure multiple times, the solution to the problem is given by the most frequent sample */
-
+#if 0
 void multidim_pCN(double* prior_mean, double* prior_diag_variance, void(*G)(const double*,int,double*,int), int ITER_NUM, double* y, double eta, double beta, int dn, int dm, double**tmp, double* x_0, double* x_1);
+
+#endif
 
 
 
@@ -37,8 +39,32 @@ int checkPcnParameters(double* C,
                        double* x1,
                        int verbose);
 
-
+void pcnMcmc(const double* C,
+             void(*G)(const double*,int,double*,int),
+             int ITER_NUM,
+             const double* y,
+             double eta,
+             double beta,
+             int dn,
+             int dm,
+             double** tmp,
+             double* x0,
+             double* x1,
+             int verbose);
 	 
-
+double bayesianInversion(int SAMPLES,
+                        int MCMC_ITER,
+                        double* MAP,
+                        const double* true_params,
+                        void(*operator)(const double*,int,double*,int),
+                        const double* observed_data,
+                        int domain_dim,
+                        int codomain_dim,
+                        double noise_var,
+                        double beta,
+                        const double* covariance_step,
+                        double* starting_point,
+                        FILE* posterior_file,
+                        int verbose);
 #endif
 
