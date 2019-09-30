@@ -36,8 +36,7 @@ int checkPcnParameters(double* C,
                        int dm,
                        double** tmp, 
                        double* x0,
-                       double* x1,
-                       int verbose);
+                       double* x1);
 
 void pcnMcmc(const double* C,
              void(*G)(const double*,int,double*,int),

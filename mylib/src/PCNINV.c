@@ -185,8 +185,13 @@ int checkPcnParameters(double* C,
  * tmp is an array of 4 dm-dimensional arrays/pointers ALREADY initialized,
 	used for some value
 	schifting insise the steps (avoiding so to call malloc multiple times)
- * x0 : point in R^n on which we start the Markov Chain
- * x1 : point in R^n; output value; at the end will contain the MC result
+ * x0 : point in R^n on which we start the Markov Chain.
+	Its value will be progressively modified until reaching
+	the end of the chain;
+ * x1 : point in R^n, already allocated in the memory. Used as "next point"
+	in the chain. In principle is *not* an input value,
+ 	but as tmp is more convenient to allocate one time instead
+	or do it again at avery function call.
  * verbose : integer that enables a debug mode */
 
 void pcnMcmc(const double* C,
@@ -219,7 +224,7 @@ void pcnMcmc(const double* C,
 		rndmNdimGaussian(NULL, C, dn, x1, 0);
 		/* 2) balance x1 w.r.t. previous x0 according to the weight beta */
 		for(k=0; k<dn; ++k){
-			x1[i] = beta*x1[i] + sqrt(1.0 - beta*beta) * x0[i];
+			x1[k] = beta*x1[k] + sqrt(1.0 - beta*beta) * x0[k];
 		}
 
 		/* Compute the potentials used in the Metropolis acceptance rate,
@@ -282,7 +287,7 @@ void pcnMcmc(const double* C,
 			/* The point is accepted: copy in x0 the value of x1,
 			 * since it becomes now the new starting point.
 			 * Start then the cycle again */
-			copy(x0, x1, dn);
+			copy(x1, x0, dn);
 		} /* end if log() <= log_alpha */
 		else {
 			if(verbose){
@@ -330,6 +335,8 @@ double bayesianInversion(int SAMPLES,
 	for(i=0; i<4; ++i){
 		tmp_for_mcmc[i] = malloc(sizeof(double) * codomain_dim);
 	}
+
+	double* next_point = malloc(sizeof(double) * domain_dim);
 	
 	/* Here I'll write all the results of my pcn MCMC
 	 * total amount of points = SAMPLES
@@ -337,8 +344,15 @@ double bayesianInversion(int SAMPLES,
 	double* posterior_points = malloc(sizeof(double)*SAMPLES*domain_dim);
 	/* Omit now the check */
 
+	/* During every iteration, the starting point will be
+	 * progressively modified until becoming the sampled one.
+	 * Consequently we need a temporar copy of its original value
+	 * in order to reset at the beginning of every iteration */
+	double* copy_start = malloc(sizeof(double) * domain_dim);
+
 	/* Sample from MCMC a number of times equal to SAMPLES */
 	for(i=0; i<SAMPLES; ++i){
+		copy(starting_point, copy_start, domain_dim);
 		pcnMcmc(covariance_step,
 			operator,
 			MCMC_ITER,
@@ -348,9 +362,17 @@ double bayesianInversion(int SAMPLES,
 			domain_dim,
 			codomain_dim,
 			tmp_for_mcmc,
-			starting_point,
-			posterior_points+i*domain_dim,
+			copy_start,
+			next_point,	
 			verbose);
+
+		/* Ok, now copy_start contains the correct sample:
+		 * copy it in the right position of posterior_points */
+		if(verbose){
+			printf("Sampled: \n");
+			printVec(copy_start, domain_dim);
+		}
+		copy(copy_start, posterior_points + i*domain_dim, domain_dim);
 	}
 
 	/* Ok, now posterior_points should contain the list of all
@@ -398,14 +420,17 @@ double bayesianInversion(int SAMPLES,
 	 * bayesian technique, are set as input. It can be used to compute
 	 * the residual error: */
 	double res = nrm2dist(MAP_output, observed_data, codomain_dim) * 100.;
-	printf("RES: %.3f%%\n", res / nrm2(observed_data, codomain_dim) );
+	res /= nrm2(observed_data, codomain_dim); 
+	printf("RES: %.3f%%\n", res);
 
 	free(MAP_output);
 	for(i=0; i<4; ++i){
 		free(tmp_for_mcmc[i]);
 	}
 	free(tmp_for_mcmc);
-
+	free(copy_start);
+	free(next_point);
+	free(posterior_points);
 	return res;
 }
 
