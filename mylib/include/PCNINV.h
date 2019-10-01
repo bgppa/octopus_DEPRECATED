@@ -51,19 +51,19 @@ void pcnMcmc(const double* C,
              double* x1,
              int verbose);
 	 
-double bayesianInversion(int SAMPLES,
-                        int MCMC_ITER,
-                        double* MAP,
-                        const double* true_params,
-                        void(*operator)(const double*,int,double*,int),
-                        const double* observed_data,
-                        int domain_dim,
-                        int codomain_dim,
-                        double noise_var,
-                        double beta,
-                        const double* covariance_step,
-                        double* starting_point,
-                        FILE* posterior_file,
-                        int verbose);
+double bayInv(int SAMPLES,
+              int MCMC_ITER,
+              double* MAP,
+              const double* true_params,
+              void(*operator)(const double*,int,double*,int),
+              const double* observed_data,
+              int domain_dim,
+              int codomain_dim,
+              double noise_var,
+              double beta,
+              const double* covariance_step,
+              double* starting_point,
+              FILE* posterior_file,
+              int verbose);
 #endif
 

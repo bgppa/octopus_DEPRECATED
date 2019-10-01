@@ -313,20 +313,21 @@ void pcnMcmc(const double* C,
  * The most frequent point is returned as a solution, while, if a name
  * file is specified, this posterior distributon is written on a file */
 
-double bayesianInversion(int SAMPLES,
-			int MCMC_ITER,
-			double* MAP,
-			const double* true_params,
-			void(*operator)(const double*,int,double*,int),
-			const double* observed_data,
-			int domain_dim,
-			int codomain_dim,
-			double noise_var,
-			double beta,
-			const double* covariance_step,
-			double* starting_point,
-			FILE* posterior_file,
-			int verbose){
+double bayInv(int SAMPLES,
+	int MCMC_ITER,
+	double* MAP,
+	const double* true_params,
+	void(*operator)(const double*,int,double*,int),
+	const double* observed_data,
+	int domain_dim,
+	int codomain_dim,
+	double noise_var,
+	double beta,
+	const double* covariance_step,
+	double* starting_point,
+	FILE* posterior_file,
+	int verbose)
+	{
 
 	int i = 0;
 	
@@ -421,8 +422,9 @@ double bayesianInversion(int SAMPLES,
 	 * the residual error: */
 	double res = nrm2dist(MAP_output, observed_data, codomain_dim) * 100.;
 	res /= nrm2(observed_data, codomain_dim); 
-	printf("RES: %.3f%%\n", res);
-
+	if(verbose){
+		printf("RES: %.3f%%\n", res);
+	}
 	free(MAP_output);
 	for(i=0; i<4; ++i){
 		free(tmp_for_mcmc[i]);
@@ -434,21 +436,4 @@ double bayesianInversion(int SAMPLES,
 	return res;
 }
 
-	
-#if 0
-int readPoints(char* file_name, double* list_of_points, int dim_each, int lines){
-        FILE* file = fopen(file_name, "r");
-        if(file == NULL){
-                printf("*error* unable to open %s\n", file_name);
-                return 0;
-        }
-        else{
-                int n=0;
-                for(n=0; n < dim_each*lines; ++n){
-                        fscanf(file, "%lf", list_of_points+n);
-                }
-                fclose(file);
-                return 1;
-        }
-}
-#endif
+

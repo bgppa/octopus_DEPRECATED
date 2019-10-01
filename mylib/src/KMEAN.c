@@ -245,7 +245,7 @@ printIntVec(labels, l);
 		}
 	}
 
-#ifdef DEBUG
+#if DEBUG
 printf("OK, frequenze salvate\n");
 printVec(frequencies, N);
 
@@ -257,7 +257,7 @@ printf("Highest frequence: centroid number %d, frequency:  %f\n", its_index, hig
 		MAP[i] = next_centroids[r*its_index + i];
 	}
 
-#ifdef DEBUG
+#if DEBUG
 printf("MAP:");
 printVec(MAP, r);
 //getchar();
