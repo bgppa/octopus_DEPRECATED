@@ -1,1 +1,4 @@
 mylib/obj/*.o
+pLinearRegression/main
+pLinearRegression/posterior_measure.txt
+pLinearRegression/random_data.txt

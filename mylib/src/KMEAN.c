@@ -1,4 +1,5 @@
 /* THIS LIBRARY HAS STILL TO BE TESTED AND COMMENTED */
+/* Attempt: adding the computation of entropy? */
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
@@ -16,40 +17,6 @@
  * For the moment it is highly experimental and must be
  * properly checked, as well as commented, again */
 
-#if 0
-double distance(double* v1, double* v2, int n){
-	double s=0;
-	for(int i=0; i<n; ++i){
-		s += pow((v1[i] - v2[i]), 2.);
-	}
-	return sqrt(s);
-}
-
-int areEqual(double* v1, double* v2, int n, double tol){
-	if(distance(v1, v2, n) < tol){
-		return 1;
-	}
-	else{
-		return 0;
-	}
-}
-
-/* replace "distance" with nrm2dist, "areEqual" with "isequal" */
-#endif 
-
-#if 0
-void findCentroid(double* list_of_points, int dim_each, int lines, double* centroid){
-	int i, j;
-	for(i=0; i<dim_each; ++i){
-		centroid[i] = 0;
-		for(j=0; j<lines; ++j){
-			centroid[i] += list_of_points[j*dim_each + i];
-		}
-		centroid[i] /= (double) lines;
-	}
-}
-#endif
-
 void findKthCentroid(double* list_of_points, int dim_each, int lines, double* centroid, int* labels, int K){
 	int i, j;
 	int actual_belonging = 0;
@@ -66,54 +33,6 @@ void findKthCentroid(double* list_of_points, int dim_each, int lines, double* ce
 	}
 }
 
-/* This function is actually not used here - can be recycled to read observation */
-
-#if 0
-int readPoints(char* file_name, double* list_of_points, int dim_each, int lines){
-	FILE* file = fopen(file_name, "r");
-	if(file == NULL){
-		printf("*error* unable to open %s\n", file_name);
-		return 0;
-	}
-	else{
-		int n=0;
-		for(n=0; n < dim_each*lines; ++n){
-			fscanf(file, "%lf", list_of_points+n);
-		}
-		fclose(file);
-		return 1;
-	}
-}
-#endif
-			
-#if 0
-void printMat(double* A, int n, int m){
-	int i;
-	int j;
-	for(i=0; i<n; ++i){
-		for(j=0; j<m; ++j){
-			printf("%f ", A[i*m+j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-}
-
-void printVec(double* v, int n){
-	for(int i=0; i<n; ++i){
-		printf("%f ", v[i]);
-	}
-	printf("\n");
-}
-
-void printIntVec(int* v, int n){
-	for(int i=0; i<n; ++i){
-		printf("%d ", v[i]);
-	}
-	printf("\n");
-}
-#endif
-
 
 double kMean(double* dati, int l, int r, int N, FILE* file_output, int MAX_ITER, double* MAP){
 
@@ -125,8 +44,9 @@ double kMean(double* dati, int l, int r, int N, FILE* file_output, int MAX_ITER,
 
 	/* At each centroid is assigned its probability according to the frequencies */
 	double* frequencies = malloc(sizeof(double) * N);
+	/* The discrete entropy will be computed by summing the frequencies */
+	double entropy = 0;
 
-	/* La convergenza la implemento dopo usando la norma, etc...*/
 	/* Step 0: initialize as centroid the first N available points */
 	for(i=0; i<N; ++i){
 		for(j=0; j<r; ++j){
@@ -244,6 +164,16 @@ printIntVec(labels, l);
 			its_index = i;
 		}
 	}
+
+	/* Let's compute the entropy */
+	double ttt;
+	for(i=0; i<N; ++i){
+		ttt = frequencies[i] / 100.;
+		entropy += ttt * log(ttt);
+	}
+	entropy = -entropy;
+
+	printf("\n - - ENTROPY: %.3f\n", entropy);
 
 #if DEBUG
 printf("OK, frequenze salvate\n");
