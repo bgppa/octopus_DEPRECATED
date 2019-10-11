@@ -2,6 +2,4 @@ mylib/obj/*.o
 tmp_*/
 */main
 */posterior_measure.txt
-*/plot2D.py
-*/plot3D.py
 */random_data.txt
