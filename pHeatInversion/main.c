@@ -1,4 +1,12 @@
-/* Straightforward case: simples heat equation on [0,1]
+/* This is a general interface for the Bayesian inverse Problem
+ * on an operator G, notation as in the README.txt file in
+ * the repository root. This main file is basically, in principle,
+ * the same for *every* problem:
+ * what really changes is the operatior G,
+ * define accordingly in an external source file:
+ * here heat_eq_g.c
+ * Its definition in mathematical terms follows:
+ * Straightforward case: simples heat equation on [0,1]
  * with zero boundary conditions. u = u(x, t)
  *     -d^2/dx u = du/dt on [0,1] for every time t>0
  *       u(x, 0) = u_D   on [0,1]
@@ -31,7 +39,8 @@
 #include "fileio.h"
 #include "heat_eq_g.c"
 
-/* G is supposed to be included in some way */
+/* G is defined ad-hoc in heat_eq_g.c */
+
 
 /* Produce toy-model data. More precisely, it is assumed to
  * have G from R^domain_dim to R^codomain_dim.
