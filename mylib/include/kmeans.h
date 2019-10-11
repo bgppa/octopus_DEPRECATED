@@ -7,7 +7,7 @@
 void findKthCentroid(double *list_of_points, int dim_each,
                 int lines, double *centroid, int *labels, int K);
 
-double kMean(double *dati, int l, int r, int N,
+double kMeans(double *dati, int l, int r, int N,
                  FILE *file_output, int MAX_ITER, double *MAP);
 
 #endif

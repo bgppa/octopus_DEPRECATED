@@ -278,7 +278,7 @@ double bayInv ( int SAMPLES, int MCMC_ITER, double *MAP,
 
         int centroid_num = (int) sqrt(SAMPLES);
         int max_iteration_for_kmeans = 1000;
-        kMean(posterior_points, SAMPLES, domain_dim, centroid_num,  
+        kMeans(posterior_points, SAMPLES, domain_dim, centroid_num,  
                 posterior_file, max_iteration_for_kmeans, MAP);
 
         /* Ok, now the posterior with frequncies has been written to
