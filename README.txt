@@ -65,3 +65,5 @@ The act of programming them is by itself an active learning step that
 extend considerabily the usage of my library.
 
 Here the name: Octopus, as sign of extension in multiple directions.
+
+mylib is the head, every operator implementation a new tentacle.
