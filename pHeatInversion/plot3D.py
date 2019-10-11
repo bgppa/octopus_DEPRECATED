@@ -23,9 +23,9 @@ zz = [i[2] for i in x]
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(xx, yy, zz, c='r', marker='o')
-ax.set_xlabel('X Label')
-ax.set_ylabel('Y Label')
-ax.set_zlabel('Z Label')
+ax.set_xlabel('param 1')
+ax.set_ylabel('param 2')
+ax.set_zlabel('% probability')
 
 try:
     plt.title(sys.argv[2])
