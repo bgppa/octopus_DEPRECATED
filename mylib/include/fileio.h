@@ -1,4 +1,4 @@
-/* Header for FILEIO.h, file interaction **to improve**!!! */
+/* Header for fileio.h, file interaction **to improve**!!! */
 #ifndef _FILEIO_H_
 #define _FILEIO_H_
 
@@ -8,8 +8,8 @@
  * (so list_points has to be at leat of dimension dime_each times lines)
  * dim_each : how many numbers are in each line
  * lines : how many lines */
-int readPoints(char* file_name, double* list_points, int dim_each, int lines);
+int readPoints(char *file_name, double *list_points, int dim_each, int lines);
 
 /* Return the number of read data */
-int dataFromFile(char* file_name, double** target);
+int dataFromFile(char *file_name, double **target);
 #endif
