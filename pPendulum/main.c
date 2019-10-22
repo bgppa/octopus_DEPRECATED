@@ -9,6 +9,7 @@
 #include "ranvar.h"
 #include "pcninv.h"
 #include "fileio.h"
+#define GOODVAL -6
 
 /* G is defined into the rust library */
 void G(const double *x, int a, double *y, int b);
@@ -16,7 +17,11 @@ void G(const double *x, int a, double *y, int b);
 double higherThan(const double *x, int n){
         double tmp = 0;
         G(x, n, &tmp, 1);
-        return tmp > -7 ? 1 : 0;
+//       printf("x: \n");
+//        printVec(x, n);
+//        printf("G(x) = %.3f\n", tmp);
+//        getchar();
+        return (tmp > GOODVAL) ? 1 : 0;
 }
 
 /* Produce toy-model data. More precisely, it is assumed to
@@ -125,12 +130,10 @@ int main(int argc, char *argv[]) {
         printf("** Starting Markov-chain point:\n");
         printVec(start, domain_dim);
         printf("\n%d samples, %d iterations per sample\n", n, mcmc);
-        printf("Remark: remember to have samples < %u, on order to"
-                "guarantee having enough seeds\n", UINT_MAX);
         printf("--- press a key to continue ---\n");
         getchar();
 
-        double integral[1] = {0.};
+        double integrals[2] = {0., 0.};
         /* Create the seed for the parallelization */
         unsigned int *seed_r = malloc(sizeof(unsigned int) * n);
         seed_r[0] = time(NULL);
@@ -162,9 +165,11 @@ int main(int argc, char *argv[]) {
         bayInv(n, mcmc, true_params, G, observed,
                domain_dim, num_observations,
                mcmc_noise, 0.2, cov, start, pfile, ofile,
-               higherThan, integral, seed_r, 0);
-
-        printf("Expected quantity of interest: %.3f\n", integral[0]);
+               higherThan, integrals, seed_r, 0);
+        
+        printf("The expected quantity of interest equals:\n");
+        printf("(full samples)\t\t%.3f\n", integrals[0]);
+        printf("(kmeans samples)\t%.3f\n", integrals[1]); 
 
         /* Free all the allocated memory */
 //        free(true_params);

@@ -147,6 +147,25 @@ double trivialIntegration(double *samples, int N, int dims,
         return sum;
 }
 
+/* Integration done w.r.t an array of dimension N times dims,
+ * where each row has a frequency as first value, followed by the
+ * point. So We compute the sum of all frequency * f(value) */
+double kmeansIntegration(double *samples_with_freq, int N, int dims,
+                        double (*f) (const double *, int))
+{
+        assert(samples_with_freq != NULL);
+        assert(f != NULL);
+        assert(N > 0 && dims > 0);
+        
+        double sum = 0;
+        for (int i = 0; i < N; ++i) {
+                sum += f(samples_with_freq + (i * dims) + 1, dims - 1) *
+                         samples_with_freq[i * dims] / 100.;
+        }
+        return sum;
+}
+
+
 /* pcn produces a single sample.
  samplePOsterior produces many of them, including the possibility
  of parallelizing the extraction WRITE BETTER */
@@ -224,8 +243,10 @@ void samplePosterior(const int samples,
  - Gpost_file   : file when the posterior's dist IMAGE under G is written
  - qoi          : Quantity of interest: function R^dom_dim -> R to
                   integrate wrt the posterior measure. Can be set to NULL.
- - intgrted_qoi : pointer to a double that will contain the result of
-                  the integration above. Can be set to NULL when not used.
+ - intgrted_qoi : vector with two elements. Both stores the integral of the
+                  quantity of interest, but [0] w.r.t using the full sample,
+                  while [1] uses the reduced k-means.
+                  Can be set to NULL when not used.
  - private_seed : when non NULL, allows the sampling to be computed in parallel
                   by using rand_r its initialization whose rules are not
                   repeated here.
@@ -262,9 +283,31 @@ void bayInv(const int samples,
                 printf("(press a key to continue)\n");
        }
 
+
+/* Temporary feature for debugging:
+ * write the posterior and its image on two files */
+FILE *tmp1 = fopen("fullposterior.txt", "w");
+assert(tmp1 != NULL);
+fprintMat(tmp1, post_pts, samples, dom_dim);
+fclose(tmp1);
+
+double *Gpost_pts = malloc(sizeof(double) * samples * cod_dim);
+assert(Gpost_pts != NULL);
+tmp1 = fopen("Gfullposterior.txt", "w");
+assert(tmp1 != NULL);
+for (int i = 0; i < samples; ++i) {
+        operator(post_pts + i * dom_dim, dom_dim,
+                 Gpost_pts + i * cod_dim, cod_dim);
+}
+fprintMat(tmp1, Gpost_pts, samples, cod_dim);
+fclose(tmp1);
+free(Gpost_pts);
+/* End of experimenting DEBUGGING part - no indentation on purpose */
+                
+
         /* 2. Integrate the Quantity of Interest */
         if (qoi != NULL && intgrted_qoi != NULL) {
-                *intgrted_qoi = trivialIntegration(post_pts, samples,
+                intgrted_qoi[0] = trivialIntegration(post_pts, samples,
                                                      dom_dim, qoi);
         } else {
                 printf("*Remark: no Quantity of Interest to integrate*.\n");
@@ -281,6 +324,11 @@ void bayInv(const int samples,
         /* Write the reduced posterior distribution to post_file file */
         if (post_file != NULL) {
                 fprintMat(post_file, post_reduced, clusters, dom_dim + 1); 
+        }
+
+        if (qoi != NULL && intgrted_qoi != NULL) {
+/* EXPERIMENTAL:recompute the qoi by using the reduced posterior */
+intgrted_qoi[1] = kmeansIntegration(post_reduced, clusters, dom_dim + 1, qoi);
         }
 
         /* 4. Compute the image of the reduced posterior distribution,
