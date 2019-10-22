@@ -53,7 +53,7 @@ And I am happy to have re-invented the wheel, since it gives experience.
 
 This subfolder does not require any dependence and can be smoothly compiled
 by the elementary script "compile.sh"
-Yes, I could have used LAPACK. But not now; the priority is on others.
+Yes, I could have used LAPACK. But not now; the priority is somewhere else.
 
 Then there are all the other folders, whose purpose is, in brief,
 to implement new specific G operators and test the bayesian inversion on them.

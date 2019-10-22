@@ -33,24 +33,24 @@ void fprintStproc(const char *filename, struct Stproc process);
 /* ---- PART 2: random variables --- */
 
 /* Random double in [0, 1) */
-double rndmUniform(void);
+double rndmUniform(unsigned int *);
 
 /* Return a random real in the interval [a, b) */
-double rndmUniformIn(double a, double b);
+double rndmUniformIn(double a, double b, unsigned int *);
 
 /* Exponential distribution with average lambda = lam */
-double rndmExp(double lam);
+double rndmExp(double lam, unsigned int *);
 
 /* One-dimensional gaussian with normal and variance.
  * The followed method is decribed in
  * <Stochastic Simulation> by Amussen-Glynn*/
-double rndmGaussian(double mean, double variance);
+double rndmGaussian(double mean, double variance, unsigned int *);
 
 /* Given a d-dimensional mean m, a covariance matrix A 
  * of dimension d * d, produces a d-dim gaussian sample stored in res.
  * Passing a NULL m implies zero mean */ 
 void rndmNdimGaussian(double *m, const double *A,
-                        int d, double *res, int verbose);
+                        int d, double *res, unsigned int *, int verbose);
 
 
 /* ---- PART 3: Stochastic processes ---- */
@@ -62,8 +62,10 @@ void rndmNdimGaussian(double *m, const double *A,
  * max_jump: maximum amount of jumps that are expected to happen. Can be set
  * huge - no consequences - but smaller spares memory;
  * container: Stochastic Process variable where to store the results */ 
+/*
 int rndmPointPoisson(double lam, double max_time, int time_steps,
                         int max_jumps, struct  Stproc* container);
+*/
 
 /* Clearly, many other kind of variables must be added! */
 #endif

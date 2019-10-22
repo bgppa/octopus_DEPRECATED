@@ -23,7 +23,7 @@ int readPoints(char *file_name, double *list_points, int dim_each, int lines)
 {
         assert(file_name != NULL);
         assert(list_points != NULL);
-        if(dim_each < 1 || lines < 1){
+        if (dim_each < 1 || lines < 1) {
                 printf("err: negative values (%d, %d)\n", dim_each, lines);
                 return 0;
         }
@@ -32,11 +32,10 @@ int readPoints(char *file_name, double *list_points, int dim_each, int lines)
         if(file == NULL){
                 printf("*err* unable to open %s\n", file_name);
                 return 0;
-        }
-        else{
+        } else{
                 int n = 0;
-                for(n = 0; n < dim_each * lines; ++n){
-                        if(fscanf(file, "%lf", list_points + n) == EOF){
+                for (n = 0; n < dim_each * lines; ++n) {
+                        if (fscanf(file, "%lf", list_points + n) == EOF) {
                                 printf("*err* unable to read %d-th data\n", n);
                                 return 0;
                         }
@@ -59,7 +58,7 @@ int dataFromFile(char *file_name, double **target)
         assert(file_name != NULL);
         assert(target != NULL);
         FILE *f = fopen(file_name, "r");
-        if(f == NULL){
+        if (f == NULL) {
                 fprintf(stderr, "unable to open %s\n", file_name);
                 return -1;
         }
@@ -68,32 +67,30 @@ int dataFromFile(char *file_name, double **target)
                        * of the if(i == size - 1) coparison later */
         double *tmp;
         tmp = realloc(*target, sizeof(double) * size);
-        if(tmp != NULL){
+        if (tmp != NULL) {
                 *target = tmp;
                 tmp = NULL;
-        }
-        else{
+        } else{
                 fprintf(stderr, "Unable to realloc\n");
                 fclose(f);
                 return -1;
         }
         
         int i = 0;
-        while(fscanf(f, "%lf", (*target) + i ) != EOF ){
+        while (fscanf(f, "%lf", (*target) + i ) != EOF ) {
 /*                printf("Read: %f\n", (*target)[i]); */
                 ++i;
-                if(i == size - 1){
+                if (i == size - 1) {
                         size *= 2;
                         tmp = realloc(*target, sizeof(double) * size);
-                        if(tmp == NULL){
+                        if(tmp == NULL) {
                                 fprintf(stderr, "no realloc, too"
                                 " many points! > %d\n", size);
                                 fprintf(stderr, "(but %d have"
                                 "been successfully read)\n", i);
                                 fclose(f);
                                 return i;
-                        }
-                        else{
+                        } else{
                                 /* Successful reallocation */
                                 *target = tmp;
                                 tmp = NULL;
@@ -104,13 +101,12 @@ int dataFromFile(char *file_name, double **target)
         /* Resize target to precisely i elements, freeing the left memory */
         /* (i is surely smaller that size) */
         tmp = realloc(*target, sizeof(double) * i);
-        if(tmp != NULL){
+        if (tmp != NULL) {
                 *target = tmp;
                 tmp = NULL;
                 printf("dataFromFile: read %d data\n", i);
                 return i;
-        }
-        else{
+        } else {
                 printf("Read %d data, but returning"
                         "array of dimension %d\n", i, size);
                 return size;

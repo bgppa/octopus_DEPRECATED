@@ -16,9 +16,14 @@ for i in f:
 f.close()
 
 # x should be now a list of 3-dimensional data
-xx = [i[0] for i in x]
-yy = [i[1] for i in x]
-zz = [i[2] for i in x]
+#xx = [i[0] for i in x]
+#yy = [i[1] for i in x]
+#zz = [i[2] for i in x]
+# Inverting the order because of the new format having the
+# frequencies as first values in each row
+zz = [i[0] for i in x]
+xx = [i[1] for i in x]
+yy = [i[2] for i in x]
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')

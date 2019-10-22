@@ -6,11 +6,11 @@ SRC = main
 # otherwise assume the name to be "main.c"
 
 $(SRC) : $(SRC).o
-	$(CC) $(SRC).o ../mylib/obj/*.o -lm -o $(SRC)
+	$(CC) $(SRC).o ../mylib/obj/*.o -lm -fopenmp -o $(SRC)
 	rm -r $(SRC).o
 
 $(SRC).o : $(SRC).c
-	$(CC) -c $(CFLAGS) -I../mylib/include/ $(SRC).c
+	$(CC) -c $(CFLAGS) -I../mylib/include/ -fopenmp $(SRC).c
 
 clean :
 	$(RM) $(SRC)

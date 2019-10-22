@@ -26,8 +26,7 @@
 #include <time.h>
 #include <assert.h>
 #include <math.h>
-#include "basics.h"
-#include "ranvar.h"
+#include "myblas.h"
 
 /* Eigenalues and eigenvectors of laplacian -dx/dx2 on [0,1]
  * with 0-boundary conditions
@@ -84,4 +83,10 @@ void G(const double *a, int basis_expansion, double *y, int obs_number)
                 }
                 y[i] = tmp_sum;
         }
+}
+
+double higherThree(const double *x, int dim){
+        (void) dim;
+        return sin(x[0]) * cos(x[1]);
+//        return(nrm2(x, dim) > 14. ? 1 : 0);
 }

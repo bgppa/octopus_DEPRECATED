@@ -3,12 +3,14 @@
  * constantly uploaded accordingly to the author's practical
  * needs. */
 
+/* COMMENTE ADEQUATELY the private seed, attempt to paralelizing!!! */
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
-#include "basics.h"
+#include "myblas.h"
 #include "ranvar.h"
 
 /* The requirement for this library are given only by basic linear
@@ -86,17 +88,21 @@ void fprintStproc(const char *filename, struct Stproc process)
  * various kind of Random Variables */
 
 /* Uniform double in the range [0,1) */
-double rndmUniform(void)
+double rndmUniform(unsigned int *private_seed)
 {
-        return (double) rand() / RAND_MAX;
+        if (private_seed == NULL) {
+                return (double) rand() / RAND_MAX;
+        } else {
+                return (double) rand_r(private_seed) / RAND_MAX;
+        }
 }
 
 /* Return a random real in the interval [a, b) */
-double rndmUniformIn(double a, double b)
+double rndmUniformIn(double a, double b, unsigned int *private_seed)
 {
-        if(a < b)
-                return a + rndmUniform() * (b - a);
-        else{
+        if (a < b) {
+                return a + rndmUniform(private_seed) * (b - a);
+        } else{
                 printf("rndmUniformIn: interval [%lf, %lf)" 
                         " but %lf >= %lf!\n", a, b, a, b);
                 return 0;
@@ -104,12 +110,11 @@ double rndmUniformIn(double a, double b)
 }
 
 /* Exponential distribution with average lambda = lam */
-double rndmExp(double lam)
+double rndmExp(double lam, unsigned int *private_seed)
 {
-        if(lam > 0){
-                return - log(rndmUniform()) / lam;
-        }
-        else{
+        if (lam > 0) {
+                return - log(rndmUniform(private_seed)) / lam;
+        } else{
                 printf("Error: lambda must be positive!\n");
                 return 0;
         }
@@ -118,9 +123,9 @@ double rndmExp(double lam)
 /* One-dimensional gaussian with normal and variance.
  * The followed method is decribed in
  * <Stochastic Simulation> by Amussen-Glynn */
-double rndmGaussian(double mean, double variance)
+double rndmGaussian(double mean, double variance, unsigned int *private_seed)
 {
-        if(variance > 0){
+        if (variance > 0) {
                 double P0 = -0.322232431088;
                 double P1 = -1;
                 double P2 = -0.342242088547;
@@ -131,13 +136,12 @@ double rndmGaussian(double mean, double variance)
                 double Q2 = 0.531103462366;
                 double Q3 = 0.10353775285;
                 double Q4 = 0.0038560700634;
-                double u = rndmUniform();
+                double u = rndmUniform(private_seed);
                 double y = sqrt(-2.0 * log(1.0 - u));
                 double NUM = P0 + P1*y + P2*y*y + P3*y*y*y + P4*y*y*y*y;
                 double DEN = Q0 + Q1*y + Q2*y*y + Q3*y*y*y + Q4*y*y*y*y;
                 return mean + sqrt(variance) * (y + NUM/DEN);
-        }
-        else{
+        } else{
                 printf("Error: gaussian variance must be positive!\n");
                 return 0;
         }
@@ -155,8 +159,8 @@ double rndmGaussian(double mean, double variance)
  - res is a d-dimension array where the d-dimension gaussian sample
    will be written;
  - a non-zero value for verbose activates debug */
-void rndmNdimGaussian(double *m, const double *C,
-                        int d, double *res, int verbose)
+void rndmNdimGaussian(double *m, const double *C, int d,
+                      double *res, unsigned int *private_seed, int verbose)
 {
         assert(C != NULL);
         assert(res != NULL);
@@ -168,14 +172,14 @@ void rndmNdimGaussian(double *m, const double *C,
         /* Passing a null pointer implies zero mean */
         if (m == NULL){
                 m = malloc(sizeof(double) * d);
-                for (i = 0; i < d; ++i){
+                for (i = 0; i < d; ++i) {
                         m[i] = 0;
                 }
                 to_free = 1;
         }
         assert(m != NULL);
 
-        if (verbose){
+        if (verbose) {
                 printf("Covariance matrix:\n");
                 printMat(C, d, d);
         }
@@ -189,13 +193,13 @@ void rndmNdimGaussian(double *m, const double *C,
         double tmp;
 
         /* In order to initialize sigma, set it all to -1.: just a signal; */
-        for (i = 0; i < d; ++i){
-                for (j = 0; j < d; ++j){
+        for (i = 0; i < d; ++i) {
+                for (j = 0; j < d; ++j) {
                         sig[i * d + j] = -1.;
                 }
         }
 
-        if (verbose){
+        if (verbose) {
                 printf("debug: understand if sigma is correctly initialized\n");
                 printf("Set all to -1 just for watching the changes: \n");
                 printMat(sig, d, d);
@@ -204,45 +208,45 @@ void rndmNdimGaussian(double *m, const double *C,
 
         /* Start by defining the firts column */
         tmp = sqrt(C[0]); /* sqrt(C_11) in the notes */
-        for (i = 0; i < d; ++i){
+        for (i = 0; i < d; ++i) {
                 sig[i * d + 0] = C[i * d + 0] / tmp;
         }
 
         /* proceed defining the diagonal (i starts from 1, 0 already done) */
-        for (i = 1; i < d; ++i){
+        for (i = 1; i < d; ++i) {
                 tmp = 0;
-                for(j = 0; j < i - 1; ++j){
+                for(j = 0; j < i - 1; ++j) {
                         tmp += pow(C[i * d + j], 2.);
                 }
                 sig[i * d + i] = sqrt(C[i * d + i]) - tmp;
         }
 
-        if (verbose){
+        if (verbose) {
                 printf("Defined: first column and diagonal\n");
                 printMat(sig, d, d);
                 getchar();
         }
 
         /* Set the upper tridiagonal part to zero */
-        for (i = 0; i < d; ++i){
-                for (j = 0; j < d; ++j){
-                        if(j > i){
+        for (i = 0; i < d; ++i) {
+                for (j = 0; j < d; ++j) {
+                        if (j > i) {
                                 sig[i * d + j] = 0.;
                         }
                 }
         }
 
-        if (verbose){
+        if (verbose) {
                 printf("Upper part setted to zero: \n");
                 printMat(sig, d, d);
         }
 
         /* Contructing the sigma matrix: (explained in the book) */
-        for (i = 0; i < d; ++i){
-                for (j = 0; j < d; ++j){
-                        if (j > 0 && j < i){
+        for (i = 0; i < d; ++i) {
+                for (j = 0; j < d; ++j) {
+                        if (j > 0 && j < i) {
                             tmp = 0;
-                            for (k = 0; k < j - 1; ++k){
+                            for (k = 0; k < j - 1; ++k) {
                                     tmp += sig[i * d + k] * sig[j * d + k];
                             }
                             sig[i*d + j] = (C[i*d + j] - tmp) / sig[j * d + j];
@@ -250,7 +254,7 @@ void rndmNdimGaussian(double *m, const double *C,
                 }
         }
 
-        if(verbose){
+        if (verbose) {
                 printf("Final sigma matrix: \n");
                 printMat(sig, d, d);
         }
@@ -259,8 +263,8 @@ void rndmNdimGaussian(double *m, const double *C,
          * gaussian, needed for the algorithm*/
         double *y = malloc(sizeof(double) * d);
         assert(y != NULL);
-        for (i = 0; i < d; ++i){
-                y[i] = rndmGaussian(0., 1.);
+        for (i = 0; i < d; ++i) {
+                y[i] = rndmGaussian(0., 1., private_seed);
         }
 
         /* According to the algorithm, the final multidimensional
@@ -276,10 +280,11 @@ void rndmNdimGaussian(double *m, const double *C,
         if (to_free) { free(m); }
 }
 
-
+/* FROM NOW ON THERE IS NO PARALELIZATION IMPLE<EMTED */
 /* ----- PART 3: Stochastic processes ---- */
 
 
+#if 0 /* TO IMPLEMENT AGAIN LATER */
 /* Simulate a Pointed poisson process and store the results into container.
  * Parameters are: 
  - lambda (intensity per unit time)
@@ -371,3 +376,4 @@ int rndmPointPoisson(double lam, double max_time, int time_steps,
 }
 
 /* Clearly, many other kind of variables must be added! */
+#endif

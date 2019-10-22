@@ -3,321 +3,319 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <omp.h>
 #include "ranvar.h"
-#include "basics.h"
+#include "myblas.h"
 #include "kmeans.h"
 
-/* Here I am trying to re-write the Bayesian Pcn inverse technique
- * in a more controlled way.
- * The pcnMcmc routine should not check for the validity of its parameters,
- * being evoked many times during the execution.
- * Rather is task is given to checkPcnParameters.
- * So now is user's responsability to use it once
- * before running the monte carlo chain.
- */
+/* Given x (point of dimension n), y (point of dimension m),
+ * return the norm of y - function(x)
+ * Used later in the Monte Carlo walk */
+double normGdiff(const double *x, int n, const double *y, int m,
+               void (*function) (const double *, int, double *, int)){
 
-/* ??? Do I really need it? */
-
-/* The following function checks the validiy of parameters
- * that are supposed to be used with pcnMcmc */
-int checkPcnParameters(double *C, void (*G) (const double*, int, double*, int),
-                       int ITER_NUM, double *y, double eta, double beta,
-                       int dn, int dm, double **tmp, double *x0, double *x1)
-{
-        assert(C != NULL);
-        assert(G != NULL);
-        assert(ITER_NUM > 0);
-        assert(y != NULL);
-        assert(eta > 0);
-        assert(beta > 0 && beta < 1);
-        assert(dn > 0);
-        assert(dm > 0);
-        assert(tmp != NULL && *tmp != NULL);
-        assert(x0 != NULL);
-        assert(x1 != NULL);
-        return 1;
+        double *tmp = malloc(sizeof(double) * m);
+        assert(tmp != NULL);
+        /* tmp = function(x) */
+        function(x, n, tmp, m);
+        /* tmp = y - tmp  = y - function(x) */
+        diff(y, tmp, m);
+        double result = nrm2(tmp, m);
+        free(tmp);
+        return result;
 }
+
 
 /* This function performs a Monte Carlo Metropolis sampling by following
  * the pCN algorithm suitable for the Bayesian Inverse problem.
- - C : covariance matrix of the gaussian prior measure in R^dn
- - G : the operator on which we do the bayesian inversion. G : R^dn -> R^dm
- - ITER_NUM : number of steps for every MCMC
- - y : the observed points, array of dimension dm
- - eta : the noise variance
- - beta : the coefficient 0 < beta < 1 described into the pCN algorithm;
- - dn : dimension of the domain
- - dm : dimension of the codomain.
- - tmp is an array of 4 dm-dimensional arrays/pointers ALREADY initialized,
-        used for some value
-        schifting inside the steps (avoiding so to call malloc multiple times)
- - x0 : point in R^n on which we start the Markov Chain.
-        Its value will be progressively modified until reaching
-        the end of the chain;
- - x1 : point in R^n, already allocated in the memory. Used as "next point"
-        in the chain. In principle is *not* an input value,
-        but as tmp is more convenient to allocate one time instead
-        or do it again at avery function call.
- - verbose : integer that enables a debug mode */
-void pcnMcmc(const double *C, void (*G) (const double*, int, double*, int),
-             int ITER_NUM, const double *y, double eta, double beta,
-             int dn, int dm, double **tmp, double *x0, double *x1, int verbose)
+ * All the parameters are left untpuched except for x0.
+ - cov          : covariance of the gaussian prior in R^dn
+ - G            : operator to invert. G : R^dn -> R^dm
+ - iter         : number of Monte Carlo steps
+ - y            : observed output of G, array of dimension dm
+ - eta          : the noise variance
+ - beta         : the coefficient 0 < beta < 1 described into the pCN algorithm;
+ - dn           : dimension of the domain
+ - dm           : dimension of the codomain.
+ - x0           : point in R^n on which we start the Markov Chain.
+                  Its value will be progressively modified during the chain,
+                  and at the end will contain a Monte Carlo sample.
+ - private_seed : private seed for parallels random generation.
+                  if NULL, no paralelization is done.
+ - verbose      : integer that enables a debug mode */
+void newPcnMcmc(const double *cov,
+                void (*G)(const double*, int, double*, int),
+                int iter,
+                const double *y,
+                double eta,
+                double beta,
+                int dn,
+                int dm,
+                double *x0,
+                unsigned int *private_seed,
+                int verbose)
 {
-        double log_alpha;
+
+        double log_alpha = 0;   /* log of the acceptance rate */
+        double pot0 = 0;        /* potential: norm(y - G(x0)) */
+        double pot1 = 0;        /* potential: norm(y - G(x1)) */
+        double *x1 = malloc(sizeof(double) * dn);
+        assert(x1 != NULL);
         int i = 0;
         int k = 0;
-        /* I use: tmp[0], [1], [2], [3]. They
-         * MUST be already initialized from main. CRUCIAL! */
 
-        /* Perform ITER_NUM steps */
-        for (i = 0; i < ITER_NUM; ++i){
-                /* Key rule to keep in mind:
-                 * x0 represents the previous point in every step,
-                 * while x1 is the new proposal
-                 * The preposed x1 follows the rules here discribed: 
-                 * 1) start by sampling x1 as a 0-mean (so, NULL) 
-                 * dn-dimensional gaussian
-                 * with covariance matrix C. No verbose mode (0 last param) */
-                rndmNdimGaussian(NULL, C, dn, x1, 0);
+        for (i = 0; i < iter; ++i) {
+                /* In every step, x0 is the previous point and 
+                 * x1 the new proposal. Defined so:
+                 * start by sampling x1 as a 0-mean (so, NULL) 
+                 * dn-dimensional gaussian with cov matrix.
+                 * private_seed is given (NULL = no parallelization)
+                 * No verbose mode (0 last param). */
+                rndmNdimGaussian(NULL, cov, dn, x1, private_seed, 0);
 
-                /* 2) balance x1 w.r.t. previous x0  and weight beta */
-                for (k = 0; k < dn; ++k){
+                /* Balance x1 with x0 and beta */
+                for (k = 0; k < dn; ++k) {
                         x1[k] = beta * x1[k] + sqrt(1.0 - beta * beta) * x0[k];
                 }
-
+        
                 /* Compute the potentials for Metropolis acceptance rate,
                  * whose results determine the acceptance of x1 */
+                pot0 = normGdiff(x0, dn, y, dm, G);
+                pot1 = normGdiff(x1, dn, y, dm, G);
+                log_alpha = (pot0 - pot1) / (2.0 * eta * eta);
 
-                /* Put in tmp[0] the evaluation of G(x0) */
-                G(x0, dn, tmp[0], dm);
-                /* Copy tmp[0] into tmp[2] */
-                copy(tmp[0], tmp[2], dm);
-                /* Perform then: tmp[2] = y - tmp[2]
-                 * i.e.: tmp[2] = y - tmp[0] = y - G(x0) as required */
-                diff(y, tmp[2], dm);
-
-                /* Put in tmp[1] the evaluation of G(x1) */
-                G(x1, dn, tmp[1], dm);  
-                /* Repeat the same reasoning as before, with tmp[3] */
-                copy(tmp[1], tmp[3], dm);
-                /* So now tmp[3] = y - G(x1) */
-                diff(y, tmp[3], dm);
-
-                /* So:  tmp[0] evaluation of G in x0
-                 *      tmp[1] evaluation of G in x1
-                 *      tmp[2] (componentwise) difference between y and G(x0)
-                 *      tmp[3] (componentwise) difference between y and G(x1)*/
-
-                /* Compute the logarithm of the acceptance rate alpha */
-                log_alpha = (nrm2(tmp[2],dm) - nrm2(tmp[3],dm)) / (2.0*eta*eta);
-
-                if (verbose){
-                        printf("Verbose mode activated!\n");
+                if (verbose) {
                         printf("x0: ");
                         printVec(x0, dn);
                         printf("x1: ");
                         printVec(x1, dn);
-                        printf("G(x0): ");
-                        printVec(tmp[0], dm);
-                        printf("G(x1): ");
-                        printVec(tmp[1], dm);
                         printf("y : ");
                         printVec(y, dm);
-                        printf("y - G(x0) : ");
-                        printVec(tmp[2], dm);
-                        printf("y - G(x1) : ");
-                        printVec(tmp[3], dm);
-                        printf("eta: %f\n", eta);
-                        printf("|y - G(x0)|^2 : %f\n", nrm2(tmp[2],dm));
-                        printf("|y - G(x1)|^2 : %f\n", nrm2(tmp[3],dm));
+                        printf("|y - G(x0)|^2 : %f\n", pot0);
+                        printf("|y - G(x1)|^2 : %f\n", pot1);
                         printf("log_alpha: %f\n", log_alpha);
                 }
 
                 /* Accept the new point if the rate is enough */
-                if (log(rndmUniform()) <= log_alpha){
+                if (log(rndmUniform(private_seed)) <= log_alpha) {
                         if (verbose){
-                                printf("FROM ");
+                                printf("From ");
                                 printVec(x0, dn);
-                                printf("TO ");
+                                printf("to ");
                                 printVec(x1, dn);
                                 printf("accepted!\n");
+                                getchar();
                         }
-                        /* The point is accepted: copy in x0 the value of x1,
-                         * since it becomes now the new starting point.
-                         * Start then the cycle again */
+                        /* x1 accepted: copy in x0 the value of x1,
+                         * becoming the the new starting point.*/
                         copy(x1, x0, dn);
-                } /* end if log() <= log_alpha */
-                else {
+                } else { /* If rejected, just verbose */
                         if (verbose){
-                        /* Point refused: nothing to do, only verbose */
-                                printf("FROM ");
+                                printf("From ");
                                 printVec(x0, dn);
-                                printf("TO ");
+                                printf("to ");
                                 printVec(x1, dn);
                                 printf("refused.\n");
+                                getchar();
                         }
                 }
-
-                if (verbose){ /* The verbose stops at every cycle */
-                        getchar();
-                }
-        } /* End: now x1 contains a single sample from the target measure */
+                /* Cycle again, with the possibly new starting point */
+        }
+        /* x0 has been rewritten with a Monte Carlo sample */
+        free(x1);
 }
 
-/* Try to implement an automatized Bayesian Inversion algorithm 
- * Key point: every pcnMcmc is now repeated multiple times,
- * the resulting distribution is the posterior distribution.
- * The most frequent point is returned as a solution, while, if a name
- * file is specified, this posterior distributon is written on a file.
+/* Assuming to already have a set of samples (x_i) from a measure MU,
+ * compute integral(f dMU) as the sum f(x_i) successively divided by N,
+ * the number of samples. Straightforward Monte Carlo method.
  * Parameters:
- - SAMPLES: number of samples generated by the pcn algorithm
-   described above. They will be processed with a k-means algorithm
-   to determin the most frequent point. It will produce a posterior
-   probability distribution with points = sqrt(SAMPLES)
- - MCMC_ITER: number of iteration for every monte carlo cycle;
- - MAP: an array of dimension domain_dim, which will contain the most
-   frequent sampled point (i.e. the solution of the problem);
- - true_params: if the user known the true parameters, i.e. a toy
-   problem is going to be studied, can insert them here.
-   Otherwise, NULL. If non-null, the actual true error between
-   true_params and MAP will be printed;
- - operator: is the R^domain_dim -> R^codomain_dim map
-   to be inverted
- - observed_data: point in R^codomain_dim whose preimage is
-   desired.
- - domain_dim and codomain_dim: see operator above;
- - noise_var: how intense is the noise on observed_data?
- - beta: a constant between 0 and 1 used for the pcn algorithm;
- - covariance_step: covariance of the prior gaussian distribution;
- - starting_point: where to start the search;
- - posterior_file: if not NULL, the posterior distribuion is written there */
-double bayInv ( int SAMPLES, int MCMC_ITER, double *MAP,
-                const double *true_params,
-                void (*operator) (const double *, int, double *, int),
-                const double *observed_data,
-                int domain_dim,
-                int codomain_dim,
-                double noise_var,
-                double beta,
-                const double *covariance_step,
-                double *starting_point,
-                FILE *posterior_file,
-                int verbose)
+ - array of N samples, each of dimension dims
+   (therefore, samples is a matrix N x dims)
+ - pointer to a function f: R^dims -> R */
+double trivialIntegration(double *samples, int N, int dims,
+                          double (*f) (const double *, int))
+{ 
+        assert(samples != NULL);
+        assert(f != NULL);
+        assert(N > 0 && dims > 0);
+        
+        double sum = 0;
+        for (int i = 0; i < N; ++i) {
+                sum += f(samples + i * dims, dims);
+        }
+        sum /= N;
+        return sum;
+}
+
+/* pcn produces a single sample.
+ samplePOsterior produces many of them, including the possibility
+ of parallelizing the extraction WRITE BETTER */
+void samplePosterior(const int samples,
+                     const int iter,
+                     void (*operator) (const double *, int, double *, int),
+                     const double *observed_data,
+                     const int dom_dim,
+                     const int cod_dim,
+                     const double noise_var,
+                     const double beta,
+                     const double *cov_step,
+                     const double *start_pnt,
+                     unsigned int *private_seed,
+                     double *post_pts,
+                     const int verbose)
 {
-
-        int i = 0;
-        
-        /* Four tmp are used for technical switces during pcn monte carlo */
-        double **tmp_for_mcmc = malloc(sizeof(double*) * 4);
-        for (i = 0; i < 4; ++i){
-                tmp_for_mcmc[i] = malloc(sizeof(double) * codomain_dim);
+        /* Store here all the samples produced by using
+         * the pcn algorithm above (POSTerior PoinTS).
+         * Their number equals the parameter "samples",
+         * so malloc has dimension samples * dom_dim.
+         * They are initialized with the starting point's value */
+        for (int i = 0; i < samples; ++i){
+                copy(start_pnt, post_pts + i * dom_dim, dom_dim);
         }
-
-        double *next_point = malloc(sizeof(double) * domain_dim);
-        
-        /* Here I'll write all the results of my pcn MCMC
-         * total amount of points = SAMPLES
-         * each of dimension domain_dim */
-        double *posterior_points =malloc(sizeof(double) * SAMPLES * domain_dim);
-        /* Omit now the check */
-
-        /* During every iteration, the starting point will be
-         * progressively modified until becoming the sampled one.
-         * Consequently we need a temporar copy of its original value
-         * in order to reset at the beginning of every iteration */
-        double *copy_start = malloc(sizeof(double) * domain_dim);
-
-        /* Check every allocated pointer */
-        assert(posterior_points != NULL && copy_start != NULL &&
-                next_point != NULL && tmp_for_mcmc != NULL);
-        for (i = 0; i < 4; ++i){
-                assert(tmp_for_mcmc[i] != NULL);
-        }
-        
-        /* Sample from MCMC a number of times equal to SAMPLES */
-        for (i = 0; i < SAMPLES; ++i){
-                copy(starting_point, copy_start, domain_dim);
-                pcnMcmc(covariance_step,
-                        operator,
-                        MCMC_ITER,
-                        observed_data,
-                        noise_var,
-                        beta,
-                        domain_dim,
-                        codomain_dim,
-                        tmp_for_mcmc,
-                        copy_start,
-                        next_point,     
-                        verbose);
-
-                /* Ok, now copy_start contains a single posterior sample:
-                 * copy it in the right position of posterior_points */
-                if (verbose){
-                        printf("Sampled: \n");
-                        printVec(copy_start, domain_dim);
+        if (private_seed == NULL){
+                /* No parallelization, use the algorithm as always */
+                for (int i = 0; i < samples; ++i){
+                        printf("...sampling %d of %d\n", i+1, samples);
+                        newPcnMcmc(cov_step, operator,
+                                   iter, observed_data,
+                                   noise_var, beta,
+                                   dom_dim,cod_dim,
+                                   post_pts + i * dom_dim, NULL,
+                                   verbose);
                 }
-                copy(copy_start, posterior_points + i * domain_dim, domain_dim);
+        } else {
+                #pragma omp parallel for
+                for (int i = 0; i < samples; ++i) {
+                        printf("...(thread %d): sampling %d of %d\n",
+                                omp_get_thread_num(), i+1, samples);
+                        newPcnMcmc(cov_step, operator,
+                                   iter, observed_data,
+                                   noise_var, beta,
+                                   dom_dim, cod_dim,
+                                   post_pts + i * dom_dim, private_seed + i,
+                                   verbose);
+                }
         }
+}
 
-        /* Now posterior_points contains all the sampled points,
-         * i.e. is an empirical estimation of the posterior distribution */
-        if (verbose){
-                printf("--- %d samples have been generated --- \n", SAMPLES);
-                getchar();
-                printMat(posterior_points, SAMPLES, domain_dim);
-                printf(" - - - - - - - - - - - - - - - - - - - - \n");
+/* Automatized Bayesian Inversion routine. 
+ * It performs pcnMcmc multiple times in a way to produce many samples, so 
+ * the resulting distribution is an approximation of the posterior distribution.
+ * This collection of samples is used to compute the integral of a possible
+ * quantity of interest. Then it is reduced in dimensionality via
+ * multidimensional histrogram (k-means algorithm), and the most frequent
+ * point (MAP) is printed; it's our "solution". 
+ * Parameters:
+ - samples      : number of samples generated by the pcn algorithm
+ - iter         : number of iteration for every monte carlo cycle
+ - true_params  : if the user knowns the true parameters, i.e. a toy
+                  problem is going to be studied, can insert them here.
+                  Otherwise, NULL. If non-null, the actual true error between
+                  true_params and map will be printed
+ - operator     : is the R^dom_dim -> R^cod_dim map to inverted
+ - observed_data: output, point in R^cod_dim, whose preimage is desired.
+ - dom_dim      : dimension of operator's domain
+ - cod_dim      : dimension of operators's codomain (and observed_data)
+ - noise_var    : how intense is the noise on observed_data?
+ - beta         : a constant between 0 and 1 used for the pcn algorithm;
+ - cov_step     : covariance of the prior gaussian distribution;
+ - start_pnt    : where to start the Monte Carlo Chain (in pcnInv);
+ - post_file    : if not NULL, FILE where the posterior distribuion is written
+ - Gpost_file   : file when the posterior's dist IMAGE under G is written
+ - qoi          : Quantity of interest: function R^dom_dim -> R to
+                  integrate wrt the posterior measure. Can be set to NULL.
+ - intgrted_qoi : pointer to a double that will contain the result of
+                  the integration above. Can be set to NULL when not used.
+ - private_seed : when non NULL, allows the sampling to be computed in parallel
+                  by using rand_r its initialization whose rules are not
+                  repeated here.
+ - verbose      : when positive, print more messages */
+void bayInv(const int samples,
+            const int iter,
+            const double *true_params,
+            void (*operator) (const double *, int, double *, int),
+            const double *observed_data,
+            const int dom_dim,
+            const int cod_dim,
+            const double noise_var,
+            const double beta,
+            const double *cov_step,
+            const double *start_pnt,
+            FILE *post_file,
+            FILE *Gpost_file,
+            double (*qoi) (const double *x, int dim),
+            double *intgrted_qoi,
+            unsigned int *private_seed,
+            const int verbose)
+{
+        /* 1. Sample the posterior distribution, storing into post_pts */
+        double *post_pts = malloc(sizeof(double) * samples * dom_dim);
+        assert(post_pts != NULL);
+        samplePosterior(samples, iter, operator,
+                        observed_data, dom_dim, cod_dim,
+                        noise_var, beta, cov_step,
+                        start_pnt, private_seed, post_pts, verbose);
+        if (verbose) {
+                printf("--- %d samples generated --- \n", samples);
+                printMat(post_pts, samples, dom_dim);
                 getchar();      
+                printf("(press a key to continue)\n");
+       }
+
+        /* 2. Integrate the Quantity of Interest */
+        if (qoi != NULL && intgrted_qoi != NULL) {
+                *intgrted_qoi = trivialIntegration(post_pts, samples,
+                                                     dom_dim, qoi);
+        } else {
+                printf("*Remark: no Quantity of Interest to integrate*.\n");
         }
 
-        /* Use now the k-means algorithm to elaborate data:
-         * the actual posterior measure will contains sqrt(SAMPLES)
-         * data (the square root is define into kmeans.c as a standard
-         * choice). Think as kmeans ad a multidimensional way for
-         * generating histograms. To every samples will be assigned its
-         * frequency */
-
-        int centroid_num = (int) sqrt(SAMPLES);
-        int max_iteration_for_kmeans = 1000;
-        kMeans(posterior_points, SAMPLES, domain_dim, centroid_num,  
-                posterior_file, max_iteration_for_kmeans, MAP);
-
-        /* Ok, now the posterior with frequncies has been written to
-         * the given file (directly with frequencies), and the MAP
-         * estimator has been saved into MAP */
-        if (verbose){
-                printf("\nEstimated MAP: \n");
-                printVec(MAP, domain_dim);
-        }
-        
-        
-        /* If the user known the true parameters, e.g. he is working with
-         * toy-model data, the true relative error can be computed */
-        if (true_params != NULL){
-                double err = nrm2dist(MAP, true_params, domain_dim) * 100.;
-                printf("ERR: %.3f%%\n", err / nrm2(true_params, domain_dim) );
-        }
-        
-        double *MAP_output = malloc(sizeof(double) * codomain_dim);
-        assert(MAP_output != NULL);
-        operator(MAP, domain_dim, MAP_output, codomain_dim);
-
-        /* So MAP_output contains the output generated by the operator when
-         * the MAP, i.e. the most frequent parameters estimated with the
-         * bayesian technique, are set as input. It can be used to compute
-         * the residual error: (i.e. norm(MAP_output - observed_data)) */
-        double res = nrm2dist(MAP_output, observed_data, codomain_dim) * 100.;
-        res /= nrm2(observed_data, codomain_dim); 
-        if (verbose){
-                printf("RES: %.3f%%\n", res);
+        /* 3. Reduce the posterior measure by using the k-means algorithm
+         * The reduced posterior distribution is stored into post_reduced */
+        int clusters = (int) sqrt(samples);
+        int max_iteration_for_kmeans = 2000;
+        double *post_reduced = malloc(sizeof(double) * clusters * (dom_dim+1));
+        assert(post_reduced != NULL);
+        kMeans(post_pts, samples, dom_dim, clusters,  
+               max_iteration_for_kmeans, post_reduced, verbose);
+        /* Write the reduced posterior distribution to post_file file */
+        if (post_file != NULL) {
+                fprintMat(post_file, post_reduced, clusters, dom_dim + 1); 
         }
 
-        free(MAP_output);
-        for (i = 0; i < 4; ++i){
-                free(tmp_for_mcmc[i]);
+        /* 4. Compute the image of the reduced posterior distribution,
+         * write it possibly to the file Gpost_file */
+        double *post_output = malloc(sizeof(double) * clusters * (cod_dim + 1));        assert(post_output != NULL);
+        for (int i = 0; i < clusters; ++i) {
+                /* The first element of each row is the same as the first
+                 * element of every post_reduced's row, i.e. the %frequency */
+                post_output[i * (cod_dim + 1)]=post_reduced[i * (dom_dim + 1)];
+                /* while the remaining are the post_reduced's images */
+                operator(post_reduced + (i * dom_dim) + 1, dom_dim,
+                         post_output + (i * (cod_dim + 1)) + 1, cod_dim);
         }
-        free(tmp_for_mcmc);
-        free(copy_start);
-        free(next_point);
-        free(posterior_points);
-        return res; /* Return the residual error */
+        if (Gpost_file != NULL) {
+                fprintMat(Gpost_file, post_output, clusters ,cod_dim + 1);
+        }
+
+        /* 5. Error estimation and MAP computation */
+        printf("MAP:\n");
+        printVec(post_reduced + 1, dom_dim);
+        printf("Its image under G:\n");
+        printVec(post_output + 1, cod_dim);
+        double err = 0;
+        /* If the user knowns the true parameters, e.g. he is working with
+         * toy-model data, the true relative error is computed */
+        if (true_params != NULL) {
+                err = nrm2dist(post_reduced + 1, true_params, dom_dim) * 100.;
+                printf("ERR: %.3f%%\n", err / nrm2(true_params, dom_dim));
+        }
+        /* anyay, we compute the residuom (output's discrepance) */ 
+        err = nrm2dist(post_output + 1, observed_data, cod_dim) * 100.;
+        err /= nrm2(observed_data, cod_dim); 
+        printf("RES: %.3f%%\n", err);
+
+        free(post_reduced);
+        free(post_pts);
+        free(post_output);
 }
