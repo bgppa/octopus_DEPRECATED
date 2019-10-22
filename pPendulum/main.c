@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
         assert(cov != NULL && start != NULL);
         /* Set a random starting point, a small covariance matrix */
         for (int i = 0; i < domain_dim; ++i){
-                start[i] = rndmUniformIn(-1., 1., NULL);
+                start[i] = rndmUniformIn(-2., 2., NULL);
                 for (int j = 0; j < domain_dim; ++j){
                         cov[i + j * domain_dim] = (i == j) ? 0.9 : 0.1;
                 }
