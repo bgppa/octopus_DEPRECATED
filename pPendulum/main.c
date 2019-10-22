@@ -86,13 +86,22 @@ int main(int argc, char *argv[]) {
         }
         n = (int) pow(2, n);
         mcmc = (int) pow(2, mcmc);
-
-        double *true_params = malloc(sizeof(double) * domain_dim);
+        
+        /* In this example, we want to specifically recontruct -1,
+           no noy model data */
+        double *true_params = NULL;
+        // malloc(sizeof(double) * domain_dim);
+        // assert(true_params != NULL);
         double *observed = malloc(sizeof(double) * num_observations);
-        assert(true_params != NULL && observed != NULL);
+        assert(observed != NULL);
+        
+        /* We want to find a preimage of the value -1 */
+        observed[0] = -1;
 
+        /* -- no toy model, we want to recontruct -1
         createToyData(data_noise, true_params, domain_dim,
                         observed, num_observations, 1);
+        */
 
         /* Now that the data are ready, set the bayes parameters */
         /* Output file where to write the posterior distribution */
@@ -132,7 +141,7 @@ int main(int argc, char *argv[]) {
         /* Proceed with the bayesian inversion:
          * n = number of posterior samples to produces;
          * mcmc = number of monte carlo iterations;
-         * true_params = true known parameters (toy model data)
+         * true_params = NULL = true known parameters (toy model data)
          * G = the linear interpolation defined above
          * observed = vector containing the y_i
          * domain_dim = domain's dimension
@@ -142,13 +151,13 @@ int main(int argc, char *argv[]) {
          * cov = my covariance matrix, prior gaussian
          * start = starting point for the chain
          * pfile = file to write posterior distribution (values, probabilities)
-         * ofile
+         * ofile = file where to write the posterior's image
          * higherThree is a function defined into heat.c,
            which values one iff the norm of the parameters exceedes three.
            I use it as Quantity of Interest since I'd like to compute
            the probability of having a "large" parameters;
          * intergral, here defined, just stores such a value;
-         * NULL
+         * seed_r = seeds for the parallel random number generation
          * 0 = no verbose/debug mode */
         bayInv(n, mcmc, true_params, G, observed,
                domain_dim, num_observations,
@@ -158,7 +167,7 @@ int main(int argc, char *argv[]) {
         printf("Expected quantity of interest: %.3f\n", integral[0]);
 
         /* Free all the allocated memory */
-        free(true_params);
+//        free(true_params);
         free(observed);
         free(cov);
         free(start);
