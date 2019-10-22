@@ -1,0 +1,13 @@
+[package]
+name = "rl_pendulum"
+version = "0.1.0"
+authors = ["Jannik Schürg <schuerg@ins.uni-bonn.de>"]
+edition = "2018"
+
+[lib]
+name = "rl_pendulum"
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"
+nalgebra = { version = "0.18", default-features = false, features = ["matrixmultiply"] }
