@@ -4,29 +4,11 @@
  * the same for *every* problem:
  * what really changes is the operatior G,
  * define accordingly in an external source file:
- * here heat_eq_g.c
- * Its definition in mathematical terms follows:
- * Straightforward case: simples heat equation on [0,1]
- * with zero boundary conditions. u = u(x, t)
- *     -d^2/dx u = du/dt on [0,1] for every time t>0
- *       u(x, 0) = u_D   on [0,1]
- *       u(0, t) = u(1, t) = 0 at every time t
- *
- * The G operator described in the README file is here so defined:
- *       - express u_0, starting condition (not necessarely known), 
- *         as basis expansion
- *         by using Fourier. Say that we stop at n = 3;
- *         It's our domain dimension;
- *       - by using the approximated u_0, solve the PDE and register
- *         the results at a fixed time, say 0.01
- *       - set, as output y, various space values of u_sol,
- *         say at x=0, 0.1, ..., x=1 (again, time has been fixed).
- *
- * Summing up we have the map:
- * G: R^domain_dim -> R^number_of_spatial_observations_at_time_0.01
- * 
- * and our aim will be to reverse it:
- * reconstruct an approximative initial condition by observing the y datas. */
+
+
+COMMENTA 
+
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,10 +19,10 @@
 #include "myblas.h"
 #include "ranvar.h"
 #include "pcninv.h"
-//#include "fileio.h"
-#include "heat_eq_g.c"
+#include "fileio.h"
+#include "polin_g.c"
 
-/* G is defined ad-hoc in heat_eq_g.c */
+/* G is defined ad-hoc in polin_g.c */
 
 
 /* Produce toy-model data. More precisely, it is assumed to
@@ -60,6 +42,7 @@ void createToyData(double noise, double *x, int domain_dim,
         int i = 0;
         /* Randomize the parameters x */
         for (i = 0; i < domain_dim; ++i) {
+//                x[i] = i + 1;
                 x[i] = rndmUniformIn(-10, 10, NULL);
         }
         /* Apply G to x */
@@ -88,8 +71,8 @@ int main(int argc, char *argv[]) {
         int mcmc = 12;
 
         /* Default value for domain and codomain of G */
-        int domain_dim = 2;
-        int num_observations = 11;
+        int domain_dim = 15;
+        int num_observations = 6;
 
         /* The values above can be modified via command arguments */
         if (argc >= 3){
@@ -104,11 +87,12 @@ int main(int argc, char *argv[]) {
         n = (int) pow(2, n);
         mcmc = (int) pow(2, mcmc);
 
-        printf("Domain dim: %d\n", domain_dim);
-        printf("Codomain: %d\n", num_observations);
         double *true_params = malloc(sizeof(double) * domain_dim);
         double *observed = malloc(sizeof(double) * num_observations);
         assert(true_params != NULL && observed != NULL);
+
+        printf("Domain dimension: %d\n", domain_dim);
+        printf("Codomain dimension: %d\n", num_observations);
 
         createToyData(data_noise, true_params, domain_dim,
                         observed, num_observations);
@@ -157,31 +141,34 @@ int main(int argc, char *argv[]) {
          * start = starting point for the chain
          * pfile = file to write posterior distribution (values, probabilities)
          * ofile
-         * higherThree is a function defined into heat.c,
-           which values one iff the norm of the parameters exceedes three.
-           I use it as Quantity of Interest since I'd like to compute
-           the probability of having a "large" parameters;
          * intergral, here defined, just stores such a value;
          * NULL
          * 0 = no verbose/debug mode */
-        double integral[2] = {0, 0}; // MUST BE 2 DIMENSION, two integrals! 
+        double integral[1] = {0.};
 
         /* Create the seed for the parallelization */
         unsigned int *seed_r = malloc(sizeof(unsigned int) * n);
         seed_r[0] = time(NULL);
-        printf("Remark: remember to have samples < %u, on order to"
-                "guarantee having enough seeds\n", UINT_MAX);
         for (int i = 1; i < n; ++i){
                 seed_r[i] = seed_r[i-1] + 1;
         }
 
+
         bayInv(n, mcmc, true_params, G, observed,
                domain_dim, num_observations,
                mcmc_noise, 0.2, cov, start, pfile, ofile,
-               higherThree, integral, seed_r, 0);
+               NULL, integral, seed_r, 0);
+
+        
+        printf("The original data were:\n");
+        printf("** True coefficients: \n");
+        printVec(true_params, domain_dim);
+        printf("\n** Their image under G: \n");
+        printVec(observed, num_observations);   
+        printf("\n");
 
 
-        printf("Expected quantity of interest: %.3f\n", integral[0]);
+//        printf("Expected quantity of interest: %.3f\n", integral[0]);
 
         /* Free all the allocated memory */
         free(true_params);
