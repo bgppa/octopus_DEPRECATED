@@ -63,15 +63,17 @@ int highFreq(const void *a, const void *b){
 /* "labels" is a sample of "n" integers each varying from 0 to "k" (not "k").
  * freq an array of dimension k. This function assigns:
  * freq[i] = %frequency of the integer i found in "labels" */
-void computeFreq(double *freq, int k, const int *labels, int n){
+void computeFreq(double *freq, int k, int *labels, int n){
         int i, j;
         for (i = 0; i < k; ++i) {
-                freq[k] = 0;
+                freq[i] = 0;
+
                 for (j = 0; j < n; ++j) {
                         if (labels[j] == i) {
                                 ++freq[i];
-                        }
+                        } 
                 }
+  
                 /* Divide for the total number and normalize to 100 */
                 freq[i] = (freq[i] / (double) n) * 100.;
         }
@@ -118,6 +120,12 @@ void kMeans(double *data, int len, int dim, int cent_num,
 
         assert(labels != NULL && prev_centroids != NULL);
         assert(next_centroids != NULL && frequencies != NULL);
+
+        /* Meglio inizialirrare tutto a zero */
+        for (int i = 0; i < cent_num; ++i) {
+                frequencies[i] = 0;
+        }
+
 
         /* Step 0: choose as centroid the first N available points
            (then, each iteration will be a refinement)
@@ -185,17 +193,23 @@ void kMeans(double *data, int len, int dim, int cent_num,
                         printMat(prev_centroids, cent_num, dim);
                         printf("To:\n");
                         printMat(next_centroids, cent_num, dim);
+                        getchar();
                 }
 
                 /* If there is no new centroid proposal, stop */
-                if (isequal(prev_centroids, next_centroids, cent_num * dim)) {
-                        break;
+                if (isequaltol(prev_centroids, next_centroids, 
+                                                cent_num * dim, 1e-4)) {
+                        printf("Centroid CONVERGENCE!\n");
+                        iteration = max_iter; /* Exit from FOR */
                 }
         
                 /* Otherwise copy next_centroids into prev_centroids and
                  * repeat the cycle  */
-                copy(prev_centroids, next_centroids, cent_num * dim);
+//                copy(prev_centroids, next_centroids, cent_num * dim);
+                copy(next_centroids, prev_centroids, cent_num * dim);
+
         } 
+
 
         if (verbose) {
                 printf("Final centroids:\n");
@@ -207,11 +221,12 @@ void kMeans(double *data, int len, int dim, int cent_num,
         /* In the array frequencies, store the %frequency of each centroid.
          * (i.e. how many points are classified with its label */
         computeFreq(frequencies, cent_num, labels, len);
-        if (verbose) {
-                printf("%%frequencies: \n");
-                printVec(frequencies, cent_num);
-                printf("their sum = %f%%\n", nrm1(frequencies, cent_num));
-        }
+        printf("Frequence compiute\n");
+                if (verbose) {
+                     printf("frequencies: \n");
+                     printVec(frequencies, cent_num);
+                     printf("their sum = %f%%\n", nrm1(frequencies, cent_num));
+                }
 
         /* Store the results into "done":
          * cent_num lines in total, each n-th line has the frequency
@@ -223,6 +238,7 @@ void kMeans(double *data, int len, int dim, int cent_num,
                 /* copy the i-th centroid into i-th line of done, shift by 1 */
                 copy(next_centroids + i * dim, done + i * (1 + dim) + 1, dim);
         }
+
 
         /* Sort done in descreasing order of frequencies */
         qsort(done, cent_num, (dim + 1) * sizeof(double), highFreq);

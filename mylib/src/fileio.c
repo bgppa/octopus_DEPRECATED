@@ -1,3 +1,6 @@
+/* THIS LIBRARY IS POSSIBLY DEPRECATED - REMOVE */
+
+
 /* Library for managing file IO interaction.
  * The test of this library has still to be properly done */
 

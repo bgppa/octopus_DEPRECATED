@@ -59,4 +59,23 @@ void bayInv(const int samples,
             double *intgrted_qoi,
             unsigned int *private_seed,
             const int verbose);
+
+void NNbayInv(const int samples,
+            const int iter,
+            const double *true_params,
+            void (*operator) (const double *, int, double *, int),
+            const double *observed_data,
+            const int dom_dim,
+            const int cod_dim,
+            const double noise_var,
+            const double beta,
+            const double *cov_step,
+            const double *start_pnt,
+            FILE *post_file,
+            FILE *Gpost_file,
+            double *no_noise_obs,
+            unsigned int *private_seed,
+            const int verbose);
+
+
 #endif
