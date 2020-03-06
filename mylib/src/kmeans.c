@@ -238,20 +238,77 @@ void kMeans(double *data, int len, int dim, int cent_num,
                 /* copy the i-th centroid into i-th line of done, shift by 1 */
                 copy(next_centroids + i * dim, done + i * (1 + dim) + 1, dim);
         }
-
-
         /* Sort done in descreasing order of frequencies */
         qsort(done, cent_num, (dim + 1) * sizeof(double), highFreq);
-
         if (verbose){
                 printf("Frequencies + centroids:\n");
                 printMat(done, cent_num, dim + 1);
                 printf("--- press a key to continue ---\n");
                 getchar();
         }
-
         free(labels);
         free(prev_centroids);
         free(next_centroids);
         free(frequencies);
+}
+
+
+/* kmeans produce ordered_data from raw_data. The following function helps
+ * in visualizing the results */
+double kmnsVisual(const double* km_results, int centroids, int domDim)
+{
+	printf("---- RECONSTRUCTED INPUT -----\n");
+	for (int i = 1; i <= (domDim + 1) * centroids; ++i) {
+		if (i % (domDim + 1) == 1) {
+			printf("%.0f%%\t", km_results[i-1]);
+		} else {
+	                printf("%e%c", km_results[i-1],
+				       	i % (domDim + 1) == 0 ? '\n' : ' ');
+		}
+	}
+	return km_results[0];	/* Return the highest registered frequence */
+}
+
+
+/* Given the kmeans data in a bayesian context, determine the errors & res */
+double kmnsBayErr (const double* km_results, int centroids, int domDim,
+		void (*GG) (const double *, int, double *, int),
+		int codDim, const double *y, const double *true_u)
+{
+	double nrmy = nrm2(y, codDim);
+	double *Gu = malloc(sizeof(double) * codDim);
+	double result = 0;
+	fillzero(Gu, codDim);
+	/* Step 0: printing the images */
+	printf("-------- IMAGES G(param) --------\n");
+	for (int i = 0; i < centroids; ++i) {
+		GG(km_results + i*(domDim+1) + 1, domDim, Gu, codDim);
+		printf("%.f%%\t", km_results[i * (domDim +1)]);
+		printVec(Gu, codDim);
+	}
+	/* Step 1: computing residues */
+	printf("-------- RESIDUALS --------\n");
+	for (int i = 0; i < centroids; ++i) {
+		GG(km_results + i*(domDim+1) + 1, domDim, Gu, codDim);
+		if(i == 0) {result = nrm2dist(Gu, y, codDim) * 100. / nrmy;}
+		printf("%.f%%\t%.2f%%\n", 
+			km_results[i * (domDim +1)],
+			nrm2dist(Gu, y, codDim) / nrmy * 100.);
+	} free(Gu);
+	/* Step 2: computing error, if possible */
+	if (true_u != NULL) {
+		double nrmu = nrm2(true_u, domDim);
+		printf("-------- ERRORS --------\n");
+		for (int i = 0; i < centroids; ++i) {
+			if (i == 0) {
+				result = nrm2dist(km_results+i*(domDim+1) + 1,
+				true_u, domDim) * 100. / nrmu;
+			}
+			printf("%.f%%\t%.2f%%\n",
+				km_results[i * (domDim + 1)],
+				nrm2dist(km_results+i*(domDim+1) + 1,
+				true_u, domDim) * 100. / nrmu);
+		}
+	}
+	return result;
 }

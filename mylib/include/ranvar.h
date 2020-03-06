@@ -41,6 +41,9 @@ double rndmUniformIn(double a, double b, unsigned int *);
 /* Exponential distribution with average lambda = lam */
 double rndmExp(double lam, unsigned int *);
 
+/* TO IMPLEMENT */
+int rndmGeometricInt(double p, unsigned int *);
+
 /* One-dimensional gaussian with normal and variance.
  * The followed method is decribed in
  * <Stochastic Simulation> by Amussen-Glynn*/

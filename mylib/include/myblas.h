@@ -91,4 +91,7 @@ int isequal(const double *v, const double *w, int d);
  * you can give a matrix as a parameter, assuming d = n x m */
 int isequaltol(const double *v, const double *w, int d, double tol);
 
+/* Fill an array of dimension d with zeroes */
+void fillzero(double *v, int d);
+
 #endif /* Header guard */

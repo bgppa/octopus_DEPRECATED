@@ -401,3 +401,14 @@ int isequal(const double *v, const double *w, int d)
                 return 0;
         #endif
 }
+
+/* Takes an array and write zeroes in it.
+ * Remember: do not use calloc as done initially, since it does not
+ * guarantee a "double value of 0.". */
+void fillzero(double *v, int dim) {
+	assert(v != NULL && dim > 0);
+	int i = 0;
+	while(i < dim) {
+		v[i++] = 0.;
+	}
+}

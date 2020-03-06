@@ -120,6 +120,18 @@ double rndmExp(double lam, unsigned int *private_seed)
         }
 }
 
+/* Return a geometric discerete random variable in the naturals {1,..}
+ * with parameter p, so having mean 1/p */
+int rndmGeometricInt(double p, unsigned int *private_seed)
+{
+	if (0 < p && p < 1) {
+		return floor( log(rndmUniform(private_seed)) / log(1. - p) );
+	} else {
+		printf("error: rndmGeometric: invalid parameter p (%f?)\n", p);
+		return -1;
+	}
+}
+
 /* One-dimensional gaussian with normal and variance.
  * The followed method is decribed in
  * <Stochastic Simulation> by Amussen-Glynn */
