@@ -21,7 +21,8 @@
  * The particle moves in dimension d, so Hamiltonian defined in R^2d */
 int hmc_single_step(int d2, double *x, double time, int N, const double *M,
 		const double *M1, double (*U) (int, const double*), int v,
-		unsigned int *my_seed)
+		unsigned int *my_seed, 
+		int (*okconstraint) (const double *, int))
 {
 	/* ADD INFO: but M1 and M are inverse of each other */
 	/* M is assumed to have been given as the inverse of M1 */
@@ -39,10 +40,14 @@ int hmc_single_step(int d2, double *x, double time, int N, const double *M,
 	/* Solve Verlet starting from this point */
 	double delta_H = verlet(x_prev, d2, time, N, M1, U, 0);
 	if (v) {printf("delta_H = %e\n", delta_H);}
-	double alpha = exp(-delta_H) < 1. ? exp(-delta_H) : 1.;
-	/* If energy is sufficiently preserved, accept and update */
-	if (rndmUniform(my_seed) <= alpha)
-		{ accpt = 1, copy(x_prev, x, d2); }
+	/* If the proposed point satisfied some given domain constraint,
+	 * continue with the metropolis acceptance */
+	if (okconstraint(x_prev, d2)) {
+		double alpha = exp(-delta_H) < 1. ? exp(-delta_H) : 1.;
+		/* If energy is sufficiently preserved, accept and update */
+		if (rndmUniform(my_seed) <= alpha)
+			{ accpt = 1, copy(x_prev, x, d2); }
+	}
 	free(x_prev), free(zeroes), free(xi0);
 	return accpt;
 }
@@ -62,7 +67,8 @@ int hmc_single_step(int d2, double *x, double time, int N, const double *M,
  * Return the %acceptance rate of the samples */
 double pRanHmcChain(int d2, double *x, double h, double lam, const double* M, 
 		const double *M1, double (*U) (int, const double*),
-		int chain_length, unsigned int *my_seed) {
+		int chain_length, unsigned int *my_seed,
+		int (*okconstraint) (const double *, int)) {
 	/* Return a sample after chain_length hcm_iterations */
 	double n_in_interval = 0;
 	double time_interval = 0;
@@ -74,7 +80,8 @@ double pRanHmcChain(int d2, double *x, double h, double lam, const double* M,
 		time_interval = n_in_interval * h;
 		accpt += 
 			hmc_single_step(d2, x, time_interval, n_in_interval,
-					M, M1, U, 0, my_seed);
+					M, M1, U, 1, my_seed, okconstraint);
+getchar();
 	}
 	return accpt * 100. / (double) chain_length;
 }
@@ -85,12 +92,14 @@ double pHmcChain(int d2, double *x, double time_interval, int steps_interval,
 		const double* M, 
 		const double* M1, 
 		double (*U) (int, const double*),
-		int chain_length, unsigned int *specific_seed) {
+		int chain_length, unsigned int *specific_seed,
+		int (*okconstraint) (const double *, int)) {
 	/* Return a sample after chain_length hcm_iterations */
 	double accpt = 0;
 	for (int i = 0; i < chain_length; ++i) {
 		accpt += hmc_single_step(d2, x, time_interval, 
-				steps_interval, M, M1, U, 0, specific_seed);
+				steps_interval, M, M1, U, 0, specific_seed,
+				okconstraint);
 	}
 	return accpt * 100. / (double) chain_length;
 }
@@ -122,7 +131,8 @@ double pRanHmcSampler(int d2, const double *x, double h, double lam,
 		const double* M1, 
 		double (*U) (int, const double*),
 		int chain_length, 
-		int n_samples, double *raw_samples)
+		int n_samples, double *raw_samples,
+		int (*okconstraint) (const double*, int))
 {
 	setbuf(stdout, NULL);
 	/* Copy the starting condition */
@@ -140,7 +150,7 @@ double pRanHmcSampler(int d2, const double *x, double h, double lam,
 		copy(x, start_copy, d2);
 		/* Perform a single sample extraction from randomized hmc */
 		acceptance += pRanHmcChain(d2, start_copy, h, lam,
-			       M, M1, U, chain_length, NULL);
+			       M, M1, U, chain_length, NULL, okconstraint);
 		/* The sample is contained in start_copy: copy its FIRST
 		 * half into raw_samples: this part represents sample from U */
 		copy(start_copy, raw_samples + i * (d2 / 2), d2/2);
@@ -155,7 +165,8 @@ double prll_pRanHmcSampler(int d2, const double *x, double h, double lam,
 		const double* M1, 
 		double (*U) (int, const double*),
 		int chain_length, 
-		int n_samples, double *raw_samples, unsigned int *prll_seed)
+		int n_samples, double *raw_samples, unsigned int *prll_seed,
+		int (*okconstraint) (const double *, int))
 {
 	setbuf(stdout, NULL);
 	double *accpt_i = malloc(sizeof(double) * n_samples);
@@ -184,7 +195,8 @@ double prll_pRanHmcSampler(int d2, const double *x, double h, double lam,
 		/* For each sample extraction, reset the initial condition */
 		/* Perform a single sample extraction from randomized hmc */
 		accpt_i[i] = pRanHmcChain(d2, n_start_copy + i * d2, h, lam,
-			       M, M1, U, chain_length, prll_seed + i);
+			       M, M1, U, chain_length, prll_seed + i,
+			       okconstraint);
 		copy(n_start_copy + i * d2, raw_samples + i * (d2 / 2), d2/2);
 	}
 	for (int i = 0; i < n_samples; ++i) {
@@ -217,7 +229,8 @@ double pHmcSampler(int d2, const double *x, double time_interval,
 		const double* M1, 
 		double (*U) (int, const double*),
 		int chain_length, 
-		int n_samples, double *raw_samples)
+		int n_samples, double *raw_samples,
+		int (*okconstraint) (const double*, int))
 {
 	setbuf(stdout, NULL);
 	/* Copy the starting condition */
@@ -235,7 +248,8 @@ double pHmcSampler(int d2, const double *x, double time_interval,
 		copy(x, start_copy, d2);
 		/* Perform a single sample extraction */
 		acceptance += pHmcChain(d2, start_copy, time_interval,
-			       n_single_step, M, M1, U, chain_length, NULL);
+			       n_single_step, M, M1, U, chain_length,
+			       NULL, okconstraint);
 		/* The sample is contained in start_copy: copy its FIRST
 		 * half into raw_samples: this part represents sample from U */
 		copy(start_copy, raw_samples + i*(d2/2), d2/2);
@@ -250,7 +264,8 @@ double prll_pHmcSampler(int d2, const double *x, double time_interval,
 		const double* M1, 
 		double (*U) (int, const double*),
 		int chain_length, 
-		int n_samples, double *raw_samples, unsigned int *prll_seed)
+		int n_samples, double *raw_samples, unsigned int *prll_seed,
+		int (*okconstraint) (const double*, int))
 {
 	setbuf(stdout, NULL);
 	double *accpt_i = malloc(sizeof(double) * n_samples);
@@ -280,7 +295,8 @@ double prll_pHmcSampler(int d2, const double *x, double time_interval,
 		/* Perform a single sample extraction from randomized hmc */
 		accpt_i[i] = pHmcChain(d2, n_start_copy + i * d2, time_interval,
 				n_single_step,
-			       M, M1, U, chain_length, prll_seed + i);
+			       M, M1, U, chain_length, prll_seed + i,
+			       okconstraint);
 		copy(n_start_copy + i * d2, raw_samples + i * (d2 / 2), d2/2);
 	}
 	for (int i = 0; i < n_samples; ++i) {

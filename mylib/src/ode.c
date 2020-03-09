@@ -17,7 +17,7 @@
 
 /* First possible algorithm: Euler's method */
 double euler (double (*f) (double, double), double y0, double T, int N,
-	      double (*true_sol) (double))
+	      double (*true_sol) (double), int verbose)
 {
 	double h = T / (double) N;
 	double tmp_t = 0; /* Time step */
@@ -32,7 +32,9 @@ double euler (double (*f) (double, double), double y0, double T, int N,
 		if (true_sol != NULL) {
 			err += fabs(y_n - true_sol(x_n));
 		}
-		printf("%f %f\n", tmp_t, y_n);
+		if (verbose) {
+			printf("%f %f\n", tmp_t, y_n);
+		}
 	}
 	if (true_sol != NULL) {
 		printf("Euler (sum of local) errors: %e\n", err);
@@ -43,7 +45,7 @@ double euler (double (*f) (double, double), double y0, double T, int N,
 /* Midpoint's rule, i.e. Runge-Kutta of order 2 */
 /* Return the value of y at time T */
 double midpoint (double (*f) (double, double), double y0, double T, int N, 
-		 double (*true_sol) (double))
+		 double (*true_sol) (double), int verbose)
 {
 	double h = T / (double) N;
 	double tmp_t = 0;
@@ -52,7 +54,9 @@ double midpoint (double (*f) (double, double), double y0, double T, int N,
 	double err = 0;
 	double k1 = 0;
 	double k2 = 0;
-	printf("%f %f\n", tmp_t, y_n);
+	if (verbose) {
+		printf("%f %f\n", tmp_t, y_n);
+	}
 	for (int i = 0; i < N; ++i) {
 		/* Update the value */
 		k1 = h * f(x_n, y_n);
@@ -63,7 +67,9 @@ double midpoint (double (*f) (double, double), double y0, double T, int N,
 		if (true_sol != NULL) {
 			err += fabs(y_n - true_sol(x_n));
 		}
-		printf("%f %f\n", tmp_t, y_n);
+		if (verbose) {
+			printf("%f %f\n", tmp_t, y_n);
+		}
 	}
 	if (true_sol != NULL) {
 		printf("Midpoint (sum of local) errors: %e\n", err);
@@ -73,7 +79,7 @@ double midpoint (double (*f) (double, double), double y0, double T, int N,
 
 /* Runge-Kutta algorithm of order 4. Return the value of y at time T */
 double rkfourth (double (*f) (double, double), double y0, double T, int N, 
-		 double (*true_sol) (double))
+		 double (*true_sol) (double), int verbose)
 {
 	double h = T / (double) N;
 	double tmp_t = 0;
@@ -84,7 +90,9 @@ double rkfourth (double (*f) (double, double), double y0, double T, int N,
 	double k2 = 0;
 	double k3 = 0;
 	double k4 = 0;
-	printf("%f %f\n", tmp_t, y_n);
+	if (verbose) {
+		printf("%f %f\n", tmp_t, y_n);
+	}
 	for (int i = 0; i < N; ++i) {
 		/* Update the value */
 		k1 = h * f(x_n, y_n);
@@ -97,7 +105,9 @@ double rkfourth (double (*f) (double, double), double y0, double T, int N,
 		if (true_sol != NULL) {
 			err += fabs(y_n - true_sol(x_n));
 		}
-		printf("%f %f\n", tmp_t, y_n);
+		if (verbose) {
+			printf("%f %f\n", tmp_t, y_n);
+		}
 	}
 	if (true_sol != NULL) {
 		printf("rk4 (sum of local) errors: %e\n", err);
@@ -108,7 +118,7 @@ double rkfourth (double (*f) (double, double), double y0, double T, int N,
 /* Starting now the support for high-dimensional ODEs */
 /* The value of y at time T is written on y0, array with initial conditions */
 void euler_d (void (*F) (int, double, const double *, double*), int d,
-		double *y0, double T, int N)
+		double *y0, double T, int N, int verbose)
 {
 	/* need: y_n, k1 tmp_eval, tmp_sum */
 	double *y_n = malloc(sizeof(double) * d);
@@ -128,9 +138,11 @@ void euler_d (void (*F) (int, double, const double *, double*), int d,
 	}	
 
 	/* Printing the initial coditions */
-	printf("%f ", t_n);
-	for(int i = 0; i < d; ++i) {
-		printf("%e%c", y_n[i], i != (d - 1) ? ' ' : '\n');
+	if (verbose) {
+		printf("%f ", t_n);
+		for(int i = 0; i < d; ++i) {
+			printf("%e%c", y_n[i], i != (d - 1) ? ' ' : '\n');
+		}
 	}
 	/* Computing y_n iteratively according to Euler */
 	for(int n = 0; n < N; ++n) {
@@ -144,9 +156,11 @@ void euler_d (void (*F) (int, double, const double *, double*), int d,
 			y_n[i] += k1[i];
 		}
 		t_n += h;
-		printf("%f ", t_n);
-		for(int i = 0; i < d; ++i) {
-			printf("%e%c", y_n[i], i != (d-1) ? ' ' : '\n');
+		if (verbose) {
+			printf("%f ", t_n);
+			for(int i = 0; i < d; ++i) {
+				printf("%e%c", y_n[i], i != (d-1) ? ' ' : '\n');
+			}	
 		}
 //		getchar();
 	}
@@ -160,7 +174,7 @@ void euler_d (void (*F) (int, double, const double *, double*), int d,
 
 /* The value of y at time T is written on y0, array with initial conditions */
 void midpoint_d (void (*F) (int, double, const double *, double*), int d,
-	         double *y0, double T, int N)
+	         double *y0, double T, int N, int verbose)
 {
 	/* need: y_n, k1, k2, k3, k4, F, tmp_eval, tmp_sum */
 	double *y_n = malloc(sizeof(double) * d);
@@ -183,9 +197,11 @@ void midpoint_d (void (*F) (int, double, const double *, double*), int d,
 	}	
 
 	/* Printing the initial coditions */
-	printf("%f ", t_n);
-	for(int i = 0; i < d; ++i) {
-		printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+	if (verbose) {
+		printf("%f ", t_n);
+		for(int i = 0; i < d; ++i) {
+			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+		}
 	}
 	/* Computing y_n iteratively according to Rounge-Kutta */
 	for(int n = 0; n < N; ++n) {
@@ -207,9 +223,11 @@ void midpoint_d (void (*F) (int, double, const double *, double*), int d,
 			y_n[i] += k2[i];
 		}
 		t_n += h;
-		printf("%f ", t_n);
-		for(int i = 0; i < d; ++i) {
-			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+		if (verbose) {
+			printf("%f ", t_n);
+			for(int i = 0; i < d; ++i) {
+				printf("%e%c", y_n[i], i < (d - 1) ? ' ' :'\n');
+			}
 		}
 	}
 	/* Copy the current value into y0 */
@@ -225,7 +243,7 @@ void midpoint_d (void (*F) (int, double, const double *, double*), int d,
 
 /* The value of y at time T is written on y0, array with initial conditions */
 void rkfourth_d (void (*F) (int, double, const double *, double*), int d,
-	         double *y0, double T, int N)
+	         double *y0, double T, int N, int verbose)
 {
 	/* need: y_n, k1, k2, k3, k4, F, tmp_eval, tmp_sum */
 	double *y_n = malloc(sizeof(double) * d);
@@ -252,9 +270,11 @@ void rkfourth_d (void (*F) (int, double, const double *, double*), int d,
 	}	
 
 	/* Printing the initial coditions */
-	printf("%f ", t_n);
-	for(int i = 0; i < d; ++i) {
-		printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+	if (verbose) {
+		printf("%f ", t_n);
+		for(int i = 0; i < d; ++i) {
+			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+		}
 	}
 	/* Computing y_n iteratively according to Rounge-Kutta */
 	for(int n = 0; n < N; ++n) {
@@ -292,9 +312,11 @@ void rkfourth_d (void (*F) (int, double, const double *, double*), int d,
 			y_n[i] += k1[i]/6. + k2[i]/3. + k3[i]/3. + k4[i]/6.;
 		}
 		t_n += h;
-		printf("%f ", t_n);
-		for(int i = 0; i < d; ++i) {
-			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+		if (verbose) {
+			printf("%f ", t_n);
+			for(int i = 0; i < d; ++i) {
+				printf("%e%c",y_n[i], i < (d - 1) ? ' ' : '\n');
+	 		}
 		}
 	}
 	/* Copy the current value into y0 */

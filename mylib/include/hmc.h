@@ -21,12 +21,15 @@
 double pHmcSampler(int d2, const double *x, double time_interval,
                 int n_single_step, const double *M, const double* M1,
 	       double (*U) (int, const double*),int chain_length,
-                int n_samples, double *raw_samples);
+                int n_samples, double *raw_samples,
+		int (*okconstraint) (const double*, int));
 
 double prll_pHmcSampler(int d2, const double *x, double time_interval,
                 int n_single_step, const double *M, const double* M1,
 		double (*U) (int, const double*), int chain_length,
-                int n_samples, double *raw_samples, unsigned int *prll_seed);
+                int n_samples, double *raw_samples, 
+		unsigned int *prll_seed,
+		int (*okconstraint) (const double*, int));
 /* Parameters:
  * d2 is the dimension 2 * d of the system;
  * x is the starting point
@@ -42,10 +45,12 @@ double prll_pHmcSampler(int d2, const double *x, double time_interval,
 double pRanHmcSampler(int d2, const double *x, double h, double lam,
                 const double *M, const double *M1,
 	       double (*U) (int, const double*),	int chain_length,
-                int n_samples, double *raw_samples);
+                int n_samples, double *raw_samples,
+		int (*okconstraint) (const double *, int));
 
 double prll_pRanHmcSampler(int d2, const double *x, double h, double lam,
                 const double *M, const double *M1,
 		double (*U) (int, const double*), int chain_length,
-                int n_samples, double *raw_samples, unsigned int *prll_seed);
+                int n_samples, double *raw_samples, unsigned int *prll_seed,
+		int (*okconstraint) (const double *, int));
 #endif
