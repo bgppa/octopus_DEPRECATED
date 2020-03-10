@@ -8,6 +8,10 @@
 #include "ode.h"
 #include "hmc.h"
 
+/* if VERLET is set to 1, use it as Hamiltonian integrator,
+ * otherwise Runge Kutta of order 4 */
+#define VERLET 1
+
 /* GENERAL REMARK: the following functions uses Verlet Integrator
  * in order to sample by using Hamiltonian Monte Carlo methods.
  * They ASSUME and RELY on the definition of the global variables
@@ -38,7 +42,12 @@ int hmc_single_step(int d2, double *x, double time, int N, const double *M,
 		else		{ x_prev[i] = xi0[i - d2/2]; }
 	}
 	/* Solve Verlet starting from this point */
-	double delta_H = verlet(x_prev, d2, time, N, M1, U, 0);
+	double delta_H =
+#if VERLET 
+		verlet(x_prev, d2, time, N, NULL, M1, U, 0);
+#else 	
+		rkfourth_d(NULL, d2, x_prev, time, N, NULL, M1, U, 0);
+#endif
 	if (v) {printf("delta_H = %e\n", delta_H);}
 	/* If the proposed point satisfied some given domain constraint,
 	 * continue with the metropolis acceptance */
@@ -80,8 +89,8 @@ double pRanHmcChain(int d2, double *x, double h, double lam, const double* M,
 		time_interval = n_in_interval * h;
 		accpt += 
 			hmc_single_step(d2, x, time_interval, n_in_interval,
-					M, M1, U, 1, my_seed, okconstraint);
-getchar();
+					M, M1, U, 0, my_seed, okconstraint);
+//getchar();
 	}
 	return accpt * 100. / (double) chain_length;
 }

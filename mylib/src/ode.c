@@ -115,228 +115,31 @@ double rkfourth (double (*f) (double, double), double y0, double T, int N,
 	return y_n;
 }
 
-/* Starting now the support for high-dimensional ODEs */
-/* The value of y at time T is written on y0, array with initial conditions */
-void euler_d (void (*F) (int, double, const double *, double*), int d,
-		double *y0, double T, int N, int verbose)
+/* ------------------ END 1-DIM ODES ------------------------------ */
+
+/* ----- AUXILIARY FUNCTIONS FOR HAMILTONIAN DYNAMICS -------------- */
+/* Evaluate the -gradient of a function U : R^d -> R
+ * d = domain's dimension, i.e...
+ * ...dimension of the array q: point in which to evaluate;
+ * ...dimension of the array grad, which will contain the results;
+ * U is the function whose gradient is of interest */
+void minus_gradient_U (int d, const double *q, double *grad,
+		double (*U) (int d, const double *x))
 {
-	/* need: y_n, k1 tmp_eval, tmp_sum */
-	double *y_n = malloc(sizeof(double) * d);
-	double *k1 = malloc(sizeof(double) * d);
-	double *tmp_eval = malloc(sizeof(double) * d);
-	assert(y_n != NULL);
-	assert(k1 != NULL);
-	assert(tmp_eval != NULL);
-
-	double t_n = 0;
-	double h = T / (double) N;
-	
-	/* Assigning the initial conditions */
-	for (int i = 0; i < d; ++i) {
-		y_n[i] = y0[i];
-		k1[i] = 0.;
-	}	
-
-	/* Printing the initial coditions */
-	if (verbose) {
-		printf("%f ", t_n);
-		for(int i = 0; i < d; ++i) {
-			printf("%e%c", y_n[i], i != (d - 1) ? ' ' : '\n');
-		}
+	double h = 0.01;	/* Finite difference's step */
+	double *q_plus_h = malloc(sizeof(double) * d);
+	assert(q_plus_h != NULL);
+	copy(q, q_plus_h, d);
+	/* Do a finite difference evaluation on every i-th coordinate */
+	for (int i = 0; i < d; ++i ) {
+		q_plus_h[i] += h;			/* Add h... */
+		grad[i] = (U(d, q_plus_h)-U(d, q)) / h;	/* FinDiff */
+		grad[i] = - grad[i]; 			/* MINUS gradient */
+		q_plus_h[i] -= h;			/* Restore the value */
 	}
-	/* Computing y_n iteratively according to Euler */
-	for(int n = 0; n < N; ++n) {
-		/* Computing k1 */
-		F(d, t_n, y_n, tmp_eval);
-		for (int i = 0; i < d; ++i) {
-			k1[i] = h * tmp_eval[i];
-		}
-		/* Now that I have k1compute y_(n+1) */
-		for (int i = 0; i < d; ++i) {
-			y_n[i] += k1[i];
-		}
-		t_n += h;
-		if (verbose) {
-			printf("%f ", t_n);
-			for(int i = 0; i < d; ++i) {
-				printf("%e%c", y_n[i], i != (d-1) ? ' ' : '\n');
-			}	
-		}
-//		getchar();
-	}
-	/* COpy the value into y0 */
-	for (int i = 0; i < d; ++i) {
-		y0[i] = y_n[i];
-	}
-	free(k1);
-	free(y_n);
+	free(q_plus_h);
 }
 
-/* The value of y at time T is written on y0, array with initial conditions */
-void midpoint_d (void (*F) (int, double, const double *, double*), int d,
-	         double *y0, double T, int N, int verbose)
-{
-	/* need: y_n, k1, k2, k3, k4, F, tmp_eval, tmp_sum */
-	double *y_n = malloc(sizeof(double) * d);
-	double *k1 = malloc(sizeof(double) * d);
-	double *k2 = malloc(sizeof(double) * d);
-	double *tmp_eval = malloc(sizeof(double) * d);
-	double *tmp_sum = malloc(sizeof(double) * d);
-	assert(y_n != NULL);
-	assert(k1 != NULL && k2 != NULL);
-	assert(tmp_eval != NULL && tmp_sum != NULL);
-
-	double t_n = 0;
-	double h = T / (double) N;
-	
-	/* Assigning the initial conditions */
-	for (int i = 0; i < d; ++i) {
-		y_n[i] = y0[i];
-		k1[i] = 0.;
-		k2[i] = 0.;
-	}	
-
-	/* Printing the initial coditions */
-	if (verbose) {
-		printf("%f ", t_n);
-		for(int i = 0; i < d; ++i) {
-			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
-		}
-	}
-	/* Computing y_n iteratively according to Rounge-Kutta */
-	for(int n = 0; n < N; ++n) {
-		/* Computing k1 */
-		F(d, t_n, y_n, tmp_eval);
-		for (int i = 0; i < d; ++i) {
-			k1[i] = h * tmp_eval[i];
-		}
-		/* Computing k2 */
-		for (int i = 0; i < d; ++i) {
-			tmp_sum[i] = y_n[i] + k1[i] / 2.;
-		}
-		F(d, t_n + h / 2., tmp_sum, tmp_eval);
-		for (int i = 0; i < d; ++i) {
-			k2[i] = h * tmp_eval[i];
-		}
-		/* Now that I have y_n, k1, k2, compute y_(n+1) */
-		for (int i = 0; i < d; ++i) {
-			y_n[i] += k2[i];
-		}
-		t_n += h;
-		if (verbose) {
-			printf("%f ", t_n);
-			for(int i = 0; i < d; ++i) {
-				printf("%e%c", y_n[i], i < (d - 1) ? ' ' :'\n');
-			}
-		}
-	}
-	/* Copy the current value into y0 */
-	for (int i = 0; i < d; ++i) {
-		y0[i] = y_n[i];
-	}
-	free(k1);
-	free(k2);
-	free(y_n);
-	free(tmp_sum);
-	free(tmp_eval);
-}
-
-/* The value of y at time T is written on y0, array with initial conditions */
-void rkfourth_d (void (*F) (int, double, const double *, double*), int d,
-	         double *y0, double T, int N, int verbose)
-{
-	/* need: y_n, k1, k2, k3, k4, F, tmp_eval, tmp_sum */
-	double *y_n = malloc(sizeof(double) * d);
-	double *k1 = malloc(sizeof(double) * d);
-	double *k2 = malloc(sizeof(double) * d);
-	double *k3 = malloc(sizeof(double) * d);
-	double *k4 = malloc(sizeof(double) * d);
-	double *tmp_eval = malloc(sizeof(double) * d);
-	double *tmp_sum = malloc(sizeof(double) * d);
-	assert(y_n != NULL);
-	assert(k1 != NULL && k2 != NULL && k3 != NULL && k4 != NULL);
-	assert(tmp_eval != NULL && tmp_sum != NULL);
-
-	double t_n = 0;
-	double h = T / (double) N;
-	
-	/* Assigning the initial conditions */
-	for (int i = 0; i < d; ++i) {
-		y_n[i] = y0[i];
-		k1[i] = 0.;
-		k2[i] = 0.;
-		k3[i] = 0.;
-		k4[i] = 0.;
-	}	
-
-	/* Printing the initial coditions */
-	if (verbose) {
-		printf("%f ", t_n);
-		for(int i = 0; i < d; ++i) {
-			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
-		}
-	}
-	/* Computing y_n iteratively according to Rounge-Kutta */
-	for(int n = 0; n < N; ++n) {
-		/* Computing k1 */
-		F(d, t_n, y_n, tmp_eval);
-		for (int i = 0; i < d; ++i) {
-			k1[i] = h * tmp_eval[i];
-		}
-		/* Computing k2 */
-		for (int i = 0; i < d; ++i) {
-			tmp_sum[i] = y_n[i] + k1[i] / 2.;
-		}
-		F(d, t_n + h / 2., tmp_sum, tmp_eval);
-		for (int i = 0; i < d; ++i) {
-			k2[i] = h * tmp_eval[i];
-		}
-		/* Cumputing k3 */
-		for (int i = 0; i < d; ++i) {
-			tmp_sum[i] = y_n[i] + k2[i] / 2.;
-		}
-		F(d, t_n + h / 2., tmp_sum, tmp_eval);
-		for (int i = 0; i < d; ++i) {
-			k3[i] = h * tmp_eval[i];
-		}
-		/* Computing k4 */
-		for (int i = 0; i < d; ++i) {
-			tmp_sum[i] = y_n[i] + k3[i];
-		}
-		F(d, t_n + h, tmp_sum, tmp_eval);
-		for (int i = 0; i < d; ++i) {
-			k4[i] = h * tmp_eval[i];
-		}
-		/* Now that I have y_n, k1, k2, k3, k4, compute y_(n+1) */
-		for (int i = 0; i < d; ++i) {
-			y_n[i] += k1[i]/6. + k2[i]/3. + k3[i]/3. + k4[i]/6.;
-		}
-		t_n += h;
-		if (verbose) {
-			printf("%f ", t_n);
-			for(int i = 0; i < d; ++i) {
-				printf("%e%c",y_n[i], i < (d - 1) ? ' ' : '\n');
-	 		}
-		}
-	}
-	/* Copy the current value into y0 */
-	for (int i = 0; i < d; ++i) {
-		y0[i] = y_n[i];
-	}
-	free(k1);
-	free(k2);
-	free(k3);
-	free(k4);
-	free(y_n);
-	free(tmp_sum);
-	free(tmp_eval);
-}
-
-
-/* 5 Marzo 2020: writing a new version which avoids the use of global var */
-
-/* HAMILTONIAN */
-/* ---- HAMILTONIAN SYSTEMS ---- */
 /* An Hamiltonian system of the form of our interest, is completely
  * specified by two elements:
  * a MASS_MATRIX calles ham_M1, of dimension dim. It is usually
@@ -362,13 +165,6 @@ void rkfourth_d (void (*F) (int, double, const double *, double*), int d,
  * The only inconvenience is that we have to keep M1 and U as
  * global data, since they are need to build the subsequent functions.
  * What follow now is the C-translation of what just described. */
-
-#if 0 /* THESE GLOBALS HAVE TO BE REMOVED */
-/* M1 and U are initially set as NULL: the user must
- * set them accordingly if he wants to use the program */
-double* ham_M1 = NULL;
-double (*ham_U) (int dim, const double *x) = NULL;
-#endif
 
 /* Compute the KYNETIC ENERGY T: 1/2 * p * M1 * p */
 /* d : dimension of p;
@@ -415,82 +211,340 @@ double ham_H (int d, const double *x, const double *M1,
 	return result;
 }
 
-#if 0 /* This was to obtain an F directly compatible with runge kutta integrato
-	 * in order to have a comparison possibility. Now that I avoided the
-	 * global variables, more work need to be done, so for the moment
-	 * comment it and postpone.
-	 * Easiest idea: extend the arguments of Runge Kutta, e.g. with
-	 * pointers: NULL = normal, otherwise Hamiltonian case.
-	 * IMPORTANT: it's relevant to have this methods, since can check
-	 * well if Verlet is behaving well. Can use it for AUTOMATED TEST! */
-/* Now that we have the Hamiltonian function H: R^2d -> R, can compute 
- * F governing the dynamical system as a componentwise gradient */
-void ham_F (int dim, double t, const double *x, double *y)
+
+/* Called not from an external user, no need to check input validity.
+ * d2 is the dimension on y, array splitted into (q, p) according to
+ * the hamiltonian notation. res is an array of dimension d2, too,
+ * while M1 the inverted mass matrix of dimension d.
+ * U is a function going from R^d to R.
+ * Remember: the ODE standard notation is y' = F(y).
+ * Well, this function return F given U and M1, standard in the Hamiltonian
+ * case. In this way we can solve hamiltonian system with Euler and RK too */
+void hamiltonianF (int d2, const double *y, double *res, const double *M1,
+		double (*U) (int, const double*) )
 {
-	(double) t;	/* In an Ham. Sys., F does not depend on t */
-
-	/* By definition, ham_F returns an array of dim components,
-	 * here writing into y, defined as follow:
-	 * if i < d / 2, so it is a "q": derivative_H_w.r.t p-i-th;
-	 * if i >= d / 2, is a "p": - derivative_H_w.r.t q-i-th. */
-
-	double h = 0.01; /* gradient step */
-	double *qp_plus_h = malloc(sizeof(double) * dim);
-	assert(qp_plus_h != NULL);
-
-	/* Set qp_plus_h as x */
-	for (int j = 0; j < dim; ++j) {
-		qp_plus_h[j] = x[j];
-	}
-
-	/* Compute the first dim / 2 components: derivative w.r.t p */
-	for (int i = 0; i < dim/2; ++i) {
-		/* Increase the i + dim/2 th component by h,
-		 * in a way to take the derivative w.r.t. p_i */
-		qp_plus_h[i + dim / 2] += h;
-		y[i] = (ham_H(dim, qp_plus_h, M1, U) - ham_H(dim, x, M1,U)) / h;
-		/* Restore qp_plus_h to its original value */
-		qp_plus_h[i + dim / 2] -= h;
-	}
-
-	/* In the remaining half components, from d/2 to dim, the gradient
-	 * is computed w.r.t the i - d/2 component (and no minus sign) */
-	for (int i = dim / 2; i < dim; ++i) {
-		qp_plus_h[i - dim / 2] += h;
-		y[i] = (ham_H(dim, qp_plus_h, M1,U) - ham_H(dim, x, M1,U)) / h;
-		y[i] = - y[i];
-		qp_plus_h[i - dim / 2] -= h;
-	}
-	free(qp_plus_h);
-	/* Perfect: the results have been stored in y */
+	int d = d2 / 2;
+	/* Compute the product M1 * p, where recall p to be the second
+	 * half of y, and store the result in the first half of res.
+	 * Enough writing d, since res has total dimension d2 */
+	axiny (M1, y + d, res, d);
+	/* Compute -gradU(q), where q is the first half of the vector y,
+	 * store then the result in the second half of res */
+	minus_gradient_U (d, y, res + d, U);
 }
-#endif
 
-/* Evaluate the -gradient of a function U : R^d -> R
- * d = domain's dimension, i.e...
- * ...dimension of the array q: point in which to evaluate;
- * ...dimension of the array grad, which will contain the results;
- * U is the function whose gradient is of interest */
-void minus_gradient_U (int d, const double *q, double *grad,
-		double (*U) (int d, const double *x))
+
+/* Starting now the support for high-dimensional ODEs */
+/* The value of y at time T is written on y0, array with initial conditions */
+double euler_d (void (*F) (int, double, const double *, double*), int d,
+		double *y0, double T, int N, double *full_dynamic,
+		const double *M1, double (*U) (int, const double *), 
+		int verbose )
 {
-	double h = 0.01;	/* Finite difference's step */
-	double *q_plus_h = malloc(sizeof(double) * d);
-	assert(q_plus_h != NULL);
-	copy(q, q_plus_h, d);
-	/*
+	double delta_h = 1.;
+	int ordinary_mode = 1; /* 1: ordinary, 0: hamiltonian mode */
+	if (F == NULL) {
+		/* Then the F must be given from U and M1, and we are in
+		 * the hamiltonian case */
+		assert(U != NULL);
+		assert(M1 != NULL);
+		assert(d / 2 == 0);
+		ordinary_mode = 0;
+		delta_h = - ham_H(d, y0, M1, U);
+	}
+	/* need: y_n, k1 tmp_eval, tmp_sum */
+	double *y_n = malloc(sizeof(double) * d);
+	double *k1 = malloc(sizeof(double) * d);
+	double *tmp_eval = malloc(sizeof(double) * d);
+	assert(y_n != NULL);
+	assert(k1 != NULL);
+	assert(tmp_eval != NULL);
+
+	double t_n = 0;
+	double h = T / (double) N;
+	
+	/* Assigning the initial conditions */
 	for (int i = 0; i < d; ++i) {
-		q_plus_h[i] = q[i];
-	}*/
-	/* Do a finite difference evaluation on every i-th coordinate */
-	for (int i = 0; i < d; ++i ) {
-		q_plus_h[i] += h;			/* Add h... */
-		grad[i] = (U(d, q_plus_h)-U(d, q)) / h;	/* FinDiff */
-		grad[i] = - grad[i]; 			/* MINUS gradient */
-		q_plus_h[i] -= h;			/* Restore the value */
+		y_n[i] = y0[i];
+		k1[i] = 0.;
+	}	
+	/* Printing the initial coditions */
+	if (verbose) {
+		printf("%f ", t_n);
+		for(int i = 0; i < d; ++i) {
+			printf("%e%c", y_n[i], i != (d - 1) ? ' ' : '\n');
+		}
 	}
-	free(q_plus_h);
+	/* Storing the initial conditions */
+	if (full_dynamic != NULL) {
+		full_dynamic[0] = t_n;
+		copy(y_n, full_dynamic + 1, d);
+	}
+	/* Computing y_n iteratively according to Euler */
+	for(int n = 0; n < N; ++n) {
+		/* Computing k1 */
+		if (ordinary_mode) {
+			F(d, t_n, y_n, tmp_eval);
+		} else {
+			hamiltonianF(d, y_n, tmp_eval, M1, U);
+		}
+		for (int i = 0; i < d; ++i) {
+			k1[i] = h * tmp_eval[i];
+		}
+		/* Now that I have k1compute y_(n+1) */
+		for (int i = 0; i < d; ++i) {
+			y_n[i] += k1[i];
+		}
+		t_n += h;
+		if (verbose) {
+			printf("%f ", t_n);
+			for(int i = 0; i < d; ++i) {
+				printf("%e%c", y_n[i], i != (d-1) ? ' ' : '\n');
+			}	
+		}
+		if (full_dynamic != NULL) {
+			full_dynamic[(n+1) * (d+1)] = t_n;
+			copy(y_n, full_dynamic + (n+1) * (d + 1) + 1, d);
+		}
+//		getchar();
+	}
+	/* Copy the value into y0 */
+	copy (y_n, y0, d);
+	if (ordinary_mode == 0) {
+		delta_h += ham_H (d, y0, M1, U);
+	}
+	free(k1);
+	free(y_n);
+	return delta_h;
 }
+
+/* The value of y at time T is written on y0, array with initial conditions */
+double midpoint_d (void (*F) (int, double, const double *, double*), int d,
+	         double *y0, double T, int N, double *full_dynamic, 
+		 const double *M1, double (*U) (int, const double *), 
+		 int verbose)
+{
+	double delta_h = 1.;
+	int ordinary_mode = 1; /* 1: ordinary, 0: hamiltonian mode */
+	if (F == NULL) {
+		/* Then the F must be given from U and M1, and we are in
+		 * the hamiltonian case */
+		assert(U != NULL);
+		assert(M1 != NULL);
+		assert(d / 2 == 0);
+		ordinary_mode = 0;
+		delta_h = - ham_H (d, y0, M1, U);
+	}
+
+	/* need: y_n, k1, k2, k3, k4, F, tmp_eval, tmp_sum */
+	double *y_n = malloc(sizeof(double) * d);
+	double *k1 = malloc(sizeof(double) * d);
+	double *k2 = malloc(sizeof(double) * d);
+	double *tmp_eval = malloc(sizeof(double) * d);
+	double *tmp_sum = malloc(sizeof(double) * d);
+	assert(y_n != NULL);
+	assert(k1 != NULL && k2 != NULL);
+	assert(tmp_eval != NULL && tmp_sum != NULL);
+
+	double t_n = 0;
+	double h = T / (double) N;
+	
+	/* Assigning the initial conditions */
+	for (int i = 0; i < d; ++i) {
+		y_n[i] = y0[i];
+		k1[i] = 0.;
+		k2[i] = 0.;
+	}	
+
+	/* Printing the initial coditions */
+	if (verbose) {
+		printf("%f ", t_n);
+		for(int i = 0; i < d; ++i) {
+			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+		}
+	} 
+	if (full_dynamic != NULL) {
+		full_dynamic[0] = t_n;
+		copy(y_n, full_dynamic + 1, d);
+	}
+	/* Computing y_n iteratively according to Rounge-Kutta */
+	for(int n = 0; n < N; ++n) {
+		/* Computing k1 */
+		if (ordinary_mode) {
+			F(d, t_n, y_n, tmp_eval);
+		} else {
+			hamiltonianF(d, y_n, tmp_eval, M1, U);
+		}
+		for (int i = 0; i < d; ++i) {
+			k1[i] = h * tmp_eval[i];
+		}
+		/* Computing k2 */
+		for (int i = 0; i < d; ++i) {
+			tmp_sum[i] = y_n[i] + k1[i] / 2.;
+		}
+		F(d, t_n + h / 2., tmp_sum, tmp_eval);
+		for (int i = 0; i < d; ++i) {
+			k2[i] = h * tmp_eval[i];
+		}
+		/* Now that I have y_n, k1, k2, compute y_(n+1) */
+		for (int i = 0; i < d; ++i) {
+			y_n[i] += k2[i];
+		}
+		t_n += h;
+		if (verbose) {
+			printf("%f ", t_n);
+			for(int i = 0; i < d; ++i) {
+				printf("%e%c", y_n[i], i < (d - 1) ? ' ' :'\n');
+			}
+		}
+		if (full_dynamic != NULL) {
+			full_dynamic[(n+1) * (d+1)] = t_n;
+			copy(y_n, full_dynamic + (n+1) * (d + 1) + 1, d);
+		}
+
+	}
+	/* Copy the current value into y0 */
+	copy (y_n, y0, d);
+	if (ordinary_mode == 0) {
+		delta_h += ham_H (d, y0, M1, U);
+	}
+	free(k1);
+	free(k2);
+	free(y_n);
+	free(tmp_sum);
+	free(tmp_eval);
+	return delta_h;
+}
+
+/* The value of y at time T is written on y0, array with initial conditions */
+double rkfourth_d (void (*F) (int, double, const double *, double*), int d,
+		double *y0, double T, int N, double *full_dynamic,
+		const double *M1, double (*U) (int, const double*), int verbose)
+{
+	double delta_h = 1.;
+	int ordinary_mode = 1; /* 1: ordinary, 0: hamiltonian mode */
+	if (F == NULL) {
+		/* Then the F must be given from U and M1, and we are in
+		 * the hamiltonian case */
+		assert(U != NULL);
+		assert(M1 != NULL);
+		assert(d % 2 == 0);
+		ordinary_mode = 0;
+		delta_h = - ham_H (d, y0, M1, U);
+	}
+
+	/* need: y_n, k1, k2, k3, k4, F, tmp_eval, tmp_sum */
+	double *y_n = malloc(sizeof(double) * d);
+	double *k1 = malloc(sizeof(double) * d);
+	double *k2 = malloc(sizeof(double) * d);
+	double *k3 = malloc(sizeof(double) * d);
+	double *k4 = malloc(sizeof(double) * d);
+	double *tmp_eval = malloc(sizeof(double) * d);
+	double *tmp_sum = malloc(sizeof(double) * d);
+	assert(y_n != NULL);
+	assert(k1 != NULL && k2 != NULL && k3 != NULL && k4 != NULL);
+	assert(tmp_eval != NULL && tmp_sum != NULL);
+
+	double t_n = 0;
+	double h = T / (double) N;
+	
+	/* Assigning the initial conditions */
+	copy (y0, y_n, d);
+	fillzero (k1, d);
+	fillzero (k2, d);
+	fillzero (k3, d);
+	fillzero (k4, d);
+
+	/* Printing the initial coditions */
+	if (verbose) {
+		printf("%f ", t_n);
+		for(int i = 0; i < d; ++i) {
+			printf("%e%c", y_n[i], i < (d - 1) ? ' ' : '\n');
+		}
+	}
+	if (full_dynamic != NULL) {
+		full_dynamic[0] = t_n;
+		copy(y_n, full_dynamic + 1, d);
+	}
+	/* Computing y_n iteratively according to Rounge-Kutta */
+	for(int n = 0; n < N; ++n) {
+		/* Computing k1 */
+		if (ordinary_mode) {
+			F(d, t_n, y_n, tmp_eval);
+		} else {
+			hamiltonianF(d, y_n, tmp_eval, M1, U);
+		}
+		for (int i = 0; i < d; ++i) {
+			k1[i] = h * tmp_eval[i];
+		}
+		/* Computing k2 */
+		for (int i = 0; i < d; ++i) {
+			tmp_sum[i] = y_n[i] + k1[i] / 2.;
+		}
+		if (ordinary_mode) {
+			F(d, t_n + h / 2., tmp_sum, tmp_eval);
+		} else {
+			hamiltonianF(d, tmp_sum, tmp_eval, M1, U);
+		}
+		for (int i = 0; i < d; ++i) {
+			k2[i] = h * tmp_eval[i];
+		}
+		/* Cumputing k3 */
+		for (int i = 0; i < d; ++i) {
+			tmp_sum[i] = y_n[i] + k2[i] / 2.;
+		}
+		if (ordinary_mode) {
+			F(d, t_n + h / 2., tmp_sum, tmp_eval);
+		} else {
+			hamiltonianF(d, tmp_sum, tmp_eval, M1, U);
+		}
+		for (int i = 0; i < d; ++i) {
+			k3[i] = h * tmp_eval[i];
+		}
+		/* Computing k4 */
+		for (int i = 0; i < d; ++i) {
+			tmp_sum[i] = y_n[i] + k3[i];
+		}
+		if (ordinary_mode) {
+			F(d, t_n + h, tmp_sum, tmp_eval);
+		} else {
+			hamiltonianF(d, tmp_sum, tmp_eval, M1, U);
+		}
+		for (int i = 0; i < d; ++i) {
+			k4[i] = h * tmp_eval[i];
+		}
+		/* Now that I have y_n, k1, k2, k3, k4, compute y_(n+1) */
+		for (int i = 0; i < d; ++i) {
+			y_n[i] += k1[i]/6. + k2[i]/3. + k3[i]/3. + k4[i]/6.;
+		}
+		t_n += h;
+		if (verbose) {
+			printf("%f ", t_n);
+			for(int i = 0; i < d; ++i) {
+				printf("%e%c",y_n[i], i < (d - 1) ? ' ' : '\n');
+	 		}
+		}
+		if (full_dynamic != NULL) {
+			full_dynamic[(n+1) * (d+1)] = t_n;
+			copy(y_n, full_dynamic + (n+1) * (d + 1) + 1, d);
+		}
+
+	}
+	/* Copy the current value into y0 */
+	copy (y_n, y0, d);
+	if (ordinary_mode == 0) {
+		delta_h += ham_H (d, y0, M1, U);
+	}
+	free(k1);
+	free(k2);
+	free(k3);
+	free(k4);
+	free(y_n);
+	free(tmp_sum);
+	free(tmp_eval);
+	return delta_h;
+}
+
 
 /* TO REWRITE */
 /* Verlet integrator as described at page 129, Nawaf's paper.
@@ -499,7 +553,7 @@ void minus_gradient_U (int d, const double *q, double *grad,
  * at time T. N is the number of steps. IMPORTANT:
  * defining the Hamiltonian system. Return the difference
  * of the hamiltonian between initial and final point */
-double verlet (double *x, int d, double T, int N, 
+double verlet (double *x, int d, double T, int N, double *full_dynamic,
 		const double *M1, double (*U) (int, const double*), int verbose)
 {
 	int d_half = d / 2;
@@ -520,6 +574,8 @@ double verlet (double *x, int d, double T, int N,
 			else	{ p_n[i - d_half] = x[i]; }
 	}
 	double dt = 0;
+
+
 	/* Set the initial hamiltonian value */
 	double initial_ham = ham_H(d, x, M1, U);
 
@@ -530,6 +586,14 @@ double verlet (double *x, int d, double T, int N,
 		for (int i = 0; i < d; ++i) {
 			printf("%e%c", i < d_half ? q_n[i] : p_n[i - d_half],
 					i < d - 1 ? ' ' : '\n');
+		}
+	}
+
+	if (full_dynamic != NULL) {
+		full_dynamic[0] = dt;
+		for (int i = 0; i < d; ++i) {
+			if (i < d_half) { full_dynamic[i +1] = q_n[i]; }
+			else		{ full_dynamic[i+1] = p_n[i - d_half]; }
 		}
 	}
 	/* Solve the system */
@@ -563,14 +627,18 @@ double verlet (double *x, int d, double T, int N,
 						p_n[i - d_half],
 						i < d - 1 ? ' ' : '\n');
 			}
+		}
+		
+		if (full_dynamic != NULL) {
+			full_dynamic[(i + 1) * (d + 1)] = dt;
+			for (int k = 0; k < d; ++k) {
+				if (k < d_half) { 
+				full_dynamic[k + (i+1) * (d+1) + 1] = q_n[k]; 
+				} else {
+				full_dynamic[k + (i+1)*(d+1) + 1] = p_n[k - d_half];
+				}
+			}
 		}	
-#if 0 // Enable if you want to display the hamiltonian value
-		/* Copy in x the current value of the dynamical system */
-		for (int i = 0; i < d; ++i) {
-			if (i < d_half ) { x[i] = q_n[i]; }
-				else	 { x[i] = p_n[i - d_half]; }
-		} printf("Hamiltonian: %e\n", ham_H(d,x,M1, U)); 
-#endif
 	} /* System solved: copy the solution into x */
 	for (int i = 0; i < d; ++i) {
 		if (i < d_half ) { x[i] = q_n[i]; }
