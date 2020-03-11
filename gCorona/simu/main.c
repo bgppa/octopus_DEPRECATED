@@ -67,7 +67,8 @@ int main() {
 	/* Let's start with the variables completely in common between all the
 	 * available methods */
 	int n_samples = 500;	/* Number of samples to generate */
-	int n_iterations = 30000;/* Depth of every chain generating 1 sample */
+	int n_iterations = 1000000;
+/* Depth of every chain generating 1 sample */
 	glob_eta = 0.1;
 
 	/* Initialize the seed: srand() is used e.g. in randomSample above,
@@ -125,7 +126,7 @@ int main() {
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
 	cov[0] = 0.8;
-	cov[3] = 200000.;	/* Specific tuning for the Corona case */
+	cov[3] = 1000000.;	/* Specific tuning for the Corona case */
 	printf("Covariance matrix:\n");
 	printMat(cov, glob_dDom, glob_dDom);
 
@@ -140,7 +141,7 @@ int main() {
 	fillzero(km_results, (glob_dDom + 1) * centroids);
 	/* Starting point suitable for the Corona model */
 	start_pt[0] = 0.17;//;fabs(rndmGaussian(0, 1., NULL));
-       	start_pt[1] = 10000;//floor(rndmGaussian(100, 20, NULL));
+       	start_pt[1] = 3000;//floor(rndmGaussian(100, 20, NULL));
 	printf("Starting point: \n");
 	printVec(start_pt, 2);
 	avrg_acceptance_rate = 
