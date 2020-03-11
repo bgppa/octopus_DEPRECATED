@@ -13,123 +13,48 @@
 #include "myblas.h"
 #include "ranvar.h"
 
-/* The requirement for this library are given only by basic linear
- * algebra operations. It contains various sections, then described */
-
-/* REMARK: it is responsability of the user to remember updating the
- * random seed, as commonly done with C random.c */
-
-/* -------------------- PART 1 --------------------:
-
- * generical management functions, like e.g. for printing the values,
- * interacting with files, initializing data structures for representing data.
- * The crucially important structure Stproc is defined into
- * ranvar.h, but here re-written between comments in order not to
- * forget its mechanisms.
-        struct Stproc{
-                double* val; val[i] = value corresponding at time t[i]
-                double* t;   time array
-                int len;     length of both val and t, i.e. how many values
-        } Stproc;
-
-*/
-
-/* Offer a default resetting for the Stproc structure.
- * It is not *needed*, but can help for avoiding null pointer
- * failures. For instance, if you declare a strproc structure
- * and then reset with that, you know that NULL values are
- * set as a sort of flags standing for "not-used-variable". */
-void resetStproc(struct Stproc *myprocessPtr)
-{
-        assert(myprocessPtr != NULL);
-
-        myprocessPtr->val = NULL;
-        myprocessPtr->t = NULL;
-        myprocessPtr->len = 0;
-}
-
-/* Free and reset a structure Stproc */
-void freeStproc(struct Stproc *myprocessPtr)
-{
-        assert(myprocessPtr != NULL);
-
-        free(myprocessPtr->val);
-        free(myprocessPtr->t);
-        resetStproc(myprocessPtr);
-}
-
-/* Print a sampled stochastic process */
-void printStproc(struct Stproc process)
-{
-        for (int i = 0; i < process.len; ++i){
-                printf("%e\t%e\n", process.t[i], process.val[i]);
-        }
-}
-
-/* Print a sampled stochastic process to a file names filename */
-void fprintStproc(const char *filename, struct Stproc process)
-{
-        assert(filename != NULL);
-
-        FILE *file = fopen(filename, "w");
-        if(file != NULL){
-                for(int i = 0; i < process.len; ++i){
-                        fprintf(file, "%e\t%e\n", process.t[i], process.val[i]);
-                }
-                fclose(file);
-        }
-        else{
-                printf("*err*: fprintStproc: %s: file not found\n", filename);
-        }
-}
-
-
-/* ----------- PART 2 ----------- 
- * various kind of Random Variables */
+/* Constants useful for the gaussian sampling */
+#define P0 -0.322232431088
+#define P1 -1
+#define P2 -0.342242088547
+#define P3 -0.0204231210245
+#define P4 -0.0000453642210148
+#define Q0 0.099348462606
+#define Q1 0.588581570495
+#define Q2 0.531103462366
+#define Q3 0.10353775285
+#define Q4 0.0038560700634
 
 /* Uniform double in the range [0,1) */
 double rndmUniform(unsigned int *private_seed)
 {
         if (private_seed == NULL) {
-                return (double) rand() / RAND_MAX;
+		return (double) rand() / RAND_MAX;
         } else {
-                return (double) rand_r(private_seed) / RAND_MAX;
-        }
+		return (double) rand_r(private_seed) / RAND_MAX;
+	}
 }
 
 /* Return a random real in the interval [a, b) */
 double rndmUniformIn(double a, double b, unsigned int *private_seed)
 {
-        if (a < b) {
-                return a + rndmUniform(private_seed) * (b - a);
-        } else{
-                printf("rndmUniformIn: interval [%lf, %lf)" 
-                        " but %lf >= %lf!\n", a, b, a, b);
-                return 0;
-        }
+	assert (a < b);
+	return a + rndmUniform(private_seed) * (b - a);
 }
 
 /* Exponential distribution with average lambda = lam */
 double rndmExp(double lam, unsigned int *private_seed)
 {
-        if (lam > 0) {
-                return - log(rndmUniform(private_seed)) / lam;
-        } else{
-                printf("Error: lambda must be positive!\n");
-                return 0;
-        }
+	assert(lam > 0.);
+	return - log(rndmUniform(private_seed)) / lam;
 }
 
 /* Return a geometric discerete random variable in the naturals {1,..}
  * with parameter p, so having mean 1/p */
 int rndmGeometricInt(double p, unsigned int *private_seed)
 {
-	if (0 < p && p < 1) {
-		return floor( log(rndmUniform(private_seed)) / log(1. - p) );
-	} else {
-		printf("error: rndmGeometric: invalid parameter p (%f?)\n", p);
-		return -1;
-	}
+	assert(p > 0. && p < 1.);
+	return floor(log(rndmUniform(private_seed)) / log(1. - p));
 }
 
 /* One-dimensional gaussian with normal and variance.
@@ -137,7 +62,12 @@ int rndmGeometricInt(double p, unsigned int *private_seed)
  * <Stochastic Simulation> by Amussen-Glynn */
 double rndmGaussian(double mean, double variance, unsigned int *private_seed)
 {
-        if (variance > 0) {
+	assert(variance >= 0);
+	/* Variance = 0 -> Dirac delta */
+	if (variance == 0) {
+		return mean;
+	} else {	/* Sampler from the Knuth's textbook */
+		/*
                 double P0 = -0.322232431088;
                 double P1 = -1;
                 double P2 = -0.342242088547;
@@ -148,15 +78,26 @@ double rndmGaussian(double mean, double variance, unsigned int *private_seed)
                 double Q2 = 0.531103462366;
                 double Q3 = 0.10353775285;
                 double Q4 = 0.0038560700634;
+		*/
                 double u = rndmUniform(private_seed);
                 double y = sqrt(-2.0 * log(1.0 - u));
                 double NUM = P0 + P1*y + P2*y*y + P3*y*y*y + P4*y*y*y*y;
                 double DEN = Q0 + Q1*y + Q2*y*y + Q3*y*y*y + Q4*y*y*y*y;
                 return mean + sqrt(variance) * (y + NUM/DEN);
-        } else{
-                printf("Error: gaussian variance must be positive!\n");
-                return 0;
         }
+}
+
+
+/* Simplified Gaussian sampling: sample a d-dimensional Gaussian having
+ * DIAGONAL covariance matrix and mean x. The new values are directly
+ * overwritten on x itself, in order to increase efficiency.
+ * Note that it's the same of adding a zero-mean gaussian on the variable x */
+void rndmDiagGauss (double* x, const double *diag_cov, int d,
+		unsigned int* seed_r)
+{
+	assert(x != NULL && diag_cov != NULL && d > 0);
+	for (int i = 0; i < d; ++i)
+		x[i] += rndmGaussian(0, diag_cov[i * d + i], seed_r);
 }
 
 /* Given a d-dimensional mean, a d times d symmetric positive definite
@@ -297,6 +238,83 @@ void rndmNdimGaussian(double *m, const double *C, int d,
 
 
 #if 0 /* TO IMPLEMENT AGAIN LATER */
+
+
+
+/* The requirement for this library are given only by basic linear
+ * algebra operations. It contains various sections, then described */
+
+/* REMARK: it is responsability of the user to remember updating the
+ * random seed, as commonly done with C random.c */
+
+/* -------------------- PART 1 --------------------:
+
+ * generical management functions, like e.g. for printing the values,
+ * interacting with files, initializing data structures for representing data.
+ * The crucially important structure Stproc is defined into
+ * ranvar.h, but here re-written between comments in order not to
+ * forget its mechanisms.
+        struct Stproc{
+                double* val; val[i] = value corresponding at time t[i]
+                double* t;   time array
+                int len;     length of both val and t, i.e. how many values
+        } Stproc;
+
+*/
+
+/* Offer a default resetting for the Stproc structure.
+ * It is not *needed*, but can help for avoiding null pointer
+ * failures. For instance, if you declare a strproc structure
+ * and then reset with that, you know that NULL values are
+ * set as a sort of flags standing for "not-used-variable". */
+void resetStproc(struct Stproc *myprocessPtr)
+{
+        assert(myprocessPtr != NULL);
+
+        myprocessPtr->val = NULL;
+        myprocessPtr->t = NULL;
+        myprocessPtr->len = 0;
+}
+
+/* Free and reset a structure Stproc */
+void freeStproc(struct Stproc *myprocessPtr)
+{
+        assert(myprocessPtr != NULL);
+
+        free(myprocessPtr->val);
+        free(myprocessPtr->t);
+        resetStproc(myprocessPtr);
+}
+
+/* Print a sampled stochastic process */
+void printStproc(struct Stproc process)
+{
+        for (int i = 0; i < process.len; ++i){
+                printf("%e\t%e\n", process.t[i], process.val[i]);
+        }
+}
+
+/* Print a sampled stochastic process to a file names filename */
+void fprintStproc(const char *filename, struct Stproc process)
+{
+        assert(filename != NULL);
+
+        FILE *file = fopen(filename, "w");
+        if(file != NULL){
+                for(int i = 0; i < process.len; ++i){
+                        fprintf(file, "%e\t%e\n", process.t[i], process.val[i]);
+                }
+                fclose(file);
+        }
+        else{
+                printf("*err*: fprintStproc: %s: file not found\n", filename);
+        }
+}
+
+
+
+
+
 /* Simulate a Pointed poisson process and store the results into container.
  * Parameters are: 
  - lambda (intensity per unit time)

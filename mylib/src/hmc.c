@@ -8,9 +8,19 @@
 #include "ode.h"
 #include "hmc.h"
 
+
+int legal_number (const double *v, int d)
+{
+	for (int i = 0; i < d; ++i) {
+		if(isinf(v[i]) || isnan(v[i]))
+			return 0;
+	}
+	return 1;
+}
+
 /* if VERLET is set to 1, use it as Hamiltonian integrator,
  * otherwise Runge Kutta of order 4 */
-#define VERLET 1
+#define VERLET 0
 
 /* GENERAL REMARK: the following functions uses Verlet Integrator
  * in order to sample by using Hamiltonian Monte Carlo methods.
@@ -42,6 +52,10 @@ int hmc_single_step(int d2, double *x, double time, int N, const double *M,
 		else		{ x_prev[i] = xi0[i - d2/2]; }
 	}
 	/* Solve Verlet starting from this point */
+
+printf("Solving the ODE starting at:\n");
+printVec(x_prev, d2);
+
 	double delta_H =
 #if VERLET 
 		verlet(x_prev, d2, time, N, NULL, M1, U, 0);
@@ -51,12 +65,28 @@ int hmc_single_step(int d2, double *x, double time, int N, const double *M,
 	if (v) {printf("delta_H = %e\n", delta_H);}
 	/* If the proposed point satisfied some given domain constraint,
 	 * continue with the metropolis acceptance */
+
+/* DEBUG */
+printf("Accept ");
+printVec(x_prev, d2);
+printf(" ?\n");
+
 	if (okconstraint(x_prev, d2)) {
+		if (legal_number(x_prev, d2) ) {
 		double alpha = exp(-delta_H) < 1. ? exp(-delta_H) : 1.;
 		/* If energy is sufficiently preserved, accept and update */
-		if (rndmUniform(my_seed) <= alpha)
-			{ accpt = 1, copy(x_prev, x, d2); }
+		if (rndmUniform(my_seed) <= alpha) {
+			accpt = 1;
+			copy(x_prev, x, d2);
+printf("YES\n");	
+			}
+		}
+else printf("NO\n");
+
 	}
+else printf("NO\n");
+//getchar();
+
 	free(x_prev), free(zeroes), free(xi0);
 	return accpt;
 }
@@ -89,7 +119,7 @@ double pRanHmcChain(int d2, double *x, double h, double lam, const double* M,
 		time_interval = n_in_interval * h;
 		accpt += 
 			hmc_single_step(d2, x, time_interval, n_in_interval,
-					M, M1, U, 0, my_seed, okconstraint);
+					M, M1, U, 1, my_seed, okconstraint);
 //getchar();
 	}
 	return accpt * 100. / (double) chain_length;
@@ -107,7 +137,7 @@ double pHmcChain(int d2, double *x, double time_interval, int steps_interval,
 	double accpt = 0;
 	for (int i = 0; i < chain_length; ++i) {
 		accpt += hmc_single_step(d2, x, time_interval, 
-				steps_interval, M, M1, U, 0, specific_seed,
+				steps_interval, M, M1, U, 1, specific_seed,
 				okconstraint);
 	}
 	return accpt * 100. / (double) chain_length;

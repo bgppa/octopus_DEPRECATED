@@ -5,6 +5,9 @@
  * two double have to be considered equals */
 #define EPS 1e-8
 
+/* Return the minimum of a, b */
+double min (double a, double b);
+
 /* Print to the screen/file a matrix A of dimension n x m, then newline */
 void printMat(const double *A, int n, int m);
 void fprintMat (FILE *F, const double *A, int n, int m);

@@ -15,6 +15,11 @@
 #include <assert.h>
 #include "myblas.h"
 
+double min (double a, double b) 
+{
+	return a < b ? a : b;
+}
+
 /* Print the content of a n times m matrix A */
 void printMat(const double *A, int n, int m)
 {

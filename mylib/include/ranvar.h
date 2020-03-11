@@ -4,6 +4,7 @@
 #ifndef _RANVAR_
 #define _RANVAR_
 
+#if 0
 /* --- PART 1: structures, initialization, I/O --- */
 
 /* A structure used for representing a stochastic process */
@@ -28,7 +29,7 @@ void printStproc(struct Stproc process);
 
 /* Print a sampled stochastic process to a file names filename */
 void fprintStproc(const char *filename, struct Stproc process);
-
+#endif
 
 /* ---- PART 2: random variables --- */
 
@@ -41,13 +42,20 @@ double rndmUniformIn(double a, double b, unsigned int *);
 /* Exponential distribution with average lambda = lam */
 double rndmExp(double lam, unsigned int *);
 
-/* TO IMPLEMENT */
+/* Sample according a geometrical distribution with parameter p */
 int rndmGeometricInt(double p, unsigned int *);
 
 /* One-dimensional gaussian with normal and variance.
  * The followed method is decribed in
  * <Stochastic Simulation> by Amussen-Glynn*/
 double rndmGaussian(double mean, double variance, unsigned int *);
+
+/* Simplified Gaussian sampling: sample a d-dimensional Gaussian having
+ * DIAGONAL covariance matrix and mean x. The new values are directly
+ * overwritten on x itself, in order to increase efficiency.
+ * Note that it's the same of adding a zero-mean gaussian on the variable x */
+void rndmDiagGauss (double *x, const double *diag_cov, int d,
+		unsigned int *);
 
 /* Given a d-dimensional mean m, a covariance matrix A 
  * of dimension d * d, produces a d-dim gaussian sample stored in res.
