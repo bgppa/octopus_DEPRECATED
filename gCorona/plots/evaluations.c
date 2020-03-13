@@ -3,7 +3,7 @@
 #include <math.h>
 
 int glob_dDom = 2;
-int glob_dCod = 35;
+int glob_dCod = 50;
 
 double gompertz (double alpha, double N, double N0, double t)
 {
@@ -53,7 +53,7 @@ void G(const double* a_n, int due, double *obs, int num_obs)
 }
 
 int main() {
-       double params[2] = {0.203, 51000};
+       double params[2] = {0.095, 51600};
         double t[glob_dCod];
         G(params, 2, t, glob_dCod);
         return 0;
