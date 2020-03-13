@@ -30,6 +30,9 @@ double *glob_y;
 double glob_eta;
 
 
+/* When using gradient descent, now actually disables, we aim in 
+ * minimizing this function. In practice the Bayesian Inverter seems to work
+ * just better, so I'll stick with that */
 double least_square (int d, const double* u)
 {
 	d = glob_dDom; /* Not useful, but parameter's compatibility */
@@ -42,8 +45,8 @@ double least_square (int d, const double* u)
 }
 
 
-
-
+/* Control function: ensures that the parameters for the Gompertz
+ * model are always positive - to be given to the pcn samples */
 int positive (const double *x, int dim)
 {
 	if (x[0] <= 0 || x[1] <= 0 ) //|| x[1] < 10)
@@ -51,6 +54,7 @@ int positive (const double *x, int dim)
 	return 1;
 }
 
+/* For the exponential interpolation, no restriction on parameters */
 int allok(const double *x, int dim) {
 	return 1;
 }
@@ -80,8 +84,8 @@ double potU (int dim, const double *u)
 int randomInput (double *x)
 {
 	assert(x != NULL);
-	x[0] = fabs(rndmGaussian(0.5, 0.4, NULL));
-	x[1] = floor(rndmGaussian(10000, 200., NULL));
+	x[0] = fabs(rndmGaussian(0.2, 0.4, NULL));
+	x[1] = floor(rndmGaussian(40000, 5000., NULL));
 	printf("X:\t");
 	printVec(x, glob_dDom);
 	glob_y[0] = 3;
@@ -98,8 +102,7 @@ int randomInput (double *x)
 	printf("G(X) + NOISE: ");
 	printVec(glob_y, glob_dCod);
 
-
-	/* minimizing least square? */
+#if 0 /* minimizing least square? */
 	printf("Trying minimizing the least square distance\n");
 	double st[2] = {0.5, 4000};
 	double lam[2] = {0.0001, 100.};
@@ -114,6 +117,7 @@ int randomInput (double *x)
 	printf("Minimum of value %f in the point", op_res);
 	printVec(st, 2);
 	getchar();
+#endif
 
 	return 1;
 }
@@ -183,7 +187,7 @@ int main() {
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
 	cov[0] = 0.05;
-	cov[3] = 60000.;/* Specific tuning for the Corona case */
+	cov[3] = 70000.;/* Specific tuning for the Corona case */
 	printf("Covariance matrix:\n");
 	printMat(cov, glob_dDom, glob_dDom);
 //getchar();
@@ -243,7 +247,7 @@ setbuf(stdout, NULL);
 	
 		/* Starting point suitable for the Corona model */
 		start_pt[0] = 1.;//;fabs(rndmGaussian(0, 1., NULL));
-       		start_pt[1] = 7000.;//floor(rndmGaussian(100, 20, NULL));
+       		start_pt[1] = 20000.;//floor(rndmGaussian(100, 20, NULL));
 		printf("###### TEST %d of %d ######\n", a + 1, tot_test);
 		randomInput(true_x);
 printf("Starting point: \n");
