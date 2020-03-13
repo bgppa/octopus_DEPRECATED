@@ -84,8 +84,8 @@ double potU (int dim, const double *u)
 int randomInput (double *x)
 {
 	assert(x != NULL);
-	x[0] = fabs(rndmGaussian(0.2, 0.4, NULL));
-	x[1] = floor(rndmGaussian(40000, 5000., NULL));
+	x[0] = fabs(rndmGaussian(1., 3., NULL));
+//	x[1] = floor(rndmGaussian(40000, 5000., NULL));
 	printf("X:\t");
 	printVec(x, glob_dDom);
 	glob_y[0] = 3;
@@ -186,8 +186,8 @@ int main() {
 	printf("beta: %f\n", beta);
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
-	cov[0] = 0.05;
-	cov[3] = 70000.;/* Specific tuning for the Corona case */
+	cov[0] = 0.7;
+//	cov[3] = 70000.;/* Specific tuning for the Corona case */
 	printf("Covariance matrix:\n");
 	printMat(cov, glob_dDom, glob_dDom);
 //getchar();
@@ -247,7 +247,7 @@ setbuf(stdout, NULL);
 	
 		/* Starting point suitable for the Corona model */
 		start_pt[0] = 1.;//;fabs(rndmGaussian(0, 1., NULL));
-       		start_pt[1] = 20000.;//floor(rndmGaussian(100, 20, NULL));
+//     		start_pt[1] = 20000.;//floor(rndmGaussian(100, 20, NULL));
 		printf("###### TEST %d of %d ######\n", a + 1, tot_test);
 		randomInput(true_x);
 printf("Starting point: \n");
@@ -260,10 +260,10 @@ getchar();
 #if PCN
 	#if PARALLEL /* Parallel pcn */
         prll_uPcnSampler(potU, glob_dDom, start_pt, n_samples, n_iterations,
-                        raw_samples, beta, cov, seed_r, positive);
+                        raw_samples, beta, cov, seed_r, allok);//positive);
 	#else	/* Ordinary pcn */
         uPcnSampler(potU, glob_dDom, start_pt, n_samples, 
-			n_iterations, raw_samples, beta, cov, positive, 1);
+			n_iterations, raw_samples, beta, cov, allok, 1);
 	//positive, 1);
 	#endif
 #elif RAN_HMC /* Randomized version */

@@ -3,7 +3,7 @@
 #include <math.h>
 
 int glob_dDom = 2;
-int glob_dCod = 10;//21;
+int glob_dCod = 35;
 
 double gompertz (double alpha, double N, double N0, double t)
 {
@@ -42,11 +42,19 @@ void G(const double* a_n, int due, double *obs, int num_obs)
 	(int) due;
 	obs[0] = 3.;
 	for (int i = 1; i < num_obs; ++i) {
-		//obs[i] = gompertz (a_n[0], a_n[1], obs[0], (double) i);
+		obs[i] = gompertz (a_n[0], a_n[1], obs[0], (double) i);
 //		obs[i] = logistic (a_n[0], a_n[1], obs[0], (double) i);
 //		obs[i] = obs[0] * exp (sqrt(a_n[0] * (double) i));
-                obs[i] = obs[0] * exp (sqrt(a_n[0] * (double) i + a_n[1]));
+//              obs[i] = obs[0] * exp (sqrt(a_n[0] * (double) i + a_n[1]));
 //		obs[i] = log_gompertz (a_n[0], a_n[1], obs[0], (double) i);
 	//	obs[i] = log_logistic (a_n[0], a_n[1], obs[0], (double) i);
+        printf("%d %.f\n", i, obs[i]);
 	}
 }
+
+int main() {
+       double params[2] = {0.203, 51000};
+        double t[glob_dCod];
+        G(params, 2, t, glob_dCod);
+        return 0;
+} 

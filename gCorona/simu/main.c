@@ -25,9 +25,11 @@ double *glob_y;
 double glob_eta;
 
 void yFromFile (void) {
-	FILE* file = fopen("italia.txt", "r");
+//	FILE* file = fopen("italia.txt", "r");
 //	FILE* file = fopen("cina.txt", "r");
-	int count = 0;
+        FILE* file = fopen("cina10.txt", "r");
+//	FILE* file = fopen("italia10.txt", "r");
+int count = 0;
 	double read = 0;
 	for (int i = 0; i < glob_dCod; ++i) {
 		if (fscanf (file, "%lf", &read)) {
@@ -134,8 +136,8 @@ int main() {
 	printf("beta: %f\n", beta);
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
-	cov[0] = 0.05;
-	cov[3] = 100000.;	/* Specific tuning for the Corona case */
+	cov[0] = 0.7;
+	cov[3] = 1.2;	/* Specific tuning for the Corona case */
 	printf("Covariance matrix:\n");
 	printMat(cov, glob_dDom, glob_dDom);
 
@@ -149,14 +151,14 @@ int main() {
 	fillzero(raw_samples, glob_dDom * n_samples);
 	fillzero(km_results, (glob_dDom + 1) * centroids);
 	/* Starting point suitable for the Corona model */
-	start_pt[0] = 0.17;//;fabs(rndmGaussian(0, 1., NULL));
-	start_pt[1] = 12000.;//floor(rndmGaussian(100, 20, NULL));
+	start_pt[0] = 7.;//;fabs(rndmGaussian(0, 1., NULL));
+	start_pt[1] = 10.;//floor(rndmGaussian(100, 20, NULL));
 	printf("Starting point: \n");
 	printVec(start_pt, glob_dDom);
 	avrg_acceptance_rate = 
 	#if PARALLEL /* Parallel pcn */
         prll_uPcnSampler(potU, glob_dDom, start_pt, n_samples, n_iterations,
-                        raw_samples, beta, cov, seed_r, positive);
+                        raw_samples, beta, cov, seed_r, allok);//positive);
 	#else	/* Ordinary pcn */
         uPcnSampler(potU, glob_dDom, start_pt, n_samples, 
 			n_iterations, raw_samples, beta, cov, positive, 0);
