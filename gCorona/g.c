@@ -3,7 +3,7 @@
 #include <math.h>
 
 int glob_dDom = 2;
-int glob_dCod = 10;//21;
+int glob_dCod = 25; //10;//21;
 
 double gompertz (double alpha, double N, double N0, double t)
 {
@@ -32,6 +32,17 @@ double log_logistic (double alpha, double N, double N0, double t)
 		log(1.- N0/N * (1. - exp(alpha*t)));
 }
 
+double b_gompertz (double alpha, double N, double N0, double t)
+{
+	if (t <= 20) { 
+	return N * exp( log(N0 / N)*exp(-alpha * t) );
+	}
+	else {
+	return N * exp( log(N0 / N)*exp(-alpha* 4. * t) );
+	}
+}
+
+
 /* G operator to be inverted: since the goal is recontructing the parameters 
  * starting from 20 time observations, G does the converse:
  * a_n is a vector whose components are what need for the chosen model
@@ -40,12 +51,15 @@ double log_logistic (double alpha, double N, double N0, double t)
 void G(const double* a_n, int due, double *obs, int num_obs)
 {
 	(int) due;
-	obs[0] = 3.;
-	for (int i = 1; i < num_obs; ++i) {
-		//obs[i] = gompertz (a_n[0], a_n[1], obs[0], (double) i);
+	/* The solution at time zero must be: */
+	//obs[0] = 3.;
+	/* exp inizia da zero, gli altri da 1 */
+	for (int i = 0; i < num_obs; ++i) {
+		obs[i] = gompertz (a_n[0], a_n[1], obs[0], (double) i);
+//		obs[i] = b_gompertz (a_n[0], a_n[1], obs[0], (double) i);
 //		obs[i] = logistic (a_n[0], a_n[1], obs[0], (double) i);
 //		obs[i] = obs[0] * exp (sqrt(a_n[0] * (double) i));
-                obs[i] = obs[0] * exp (sqrt(a_n[0] * (double) i + a_n[1]));
+//		obs[i] = exp(a_n[0] * (double) i + a_n[1]);
 //		obs[i] = log_gompertz (a_n[0], a_n[1], obs[0], (double) i);
 	//	obs[i] = log_logistic (a_n[0], a_n[1], obs[0], (double) i);
 	}

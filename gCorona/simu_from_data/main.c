@@ -25,9 +25,10 @@ double *glob_y;
 double glob_eta;
 
 void yFromFile (void) {
-//	FILE* file = fopen("italia.txt", "r");
+	FILE* file = fopen("italia.txt", "r");
+//	FILE* file = fopen("ita_castorina.txt", "r");
 //	FILE* file = fopen("cina.txt", "r");
-        FILE* file = fopen("cina10.txt", "r");
+//        FILE* file = fopen("cina10.txt", "r");
 //	FILE* file = fopen("italia10.txt", "r");
 int count = 0;
 	double read = 0;
@@ -80,7 +81,7 @@ int main() {
 	 * available methods */
 	int n_samples = 500;	/* Number of samples to generate */
 	int n_iterations = 50000;/* Depth of every chain generating 1 sample */
-	glob_eta = 0.01;
+	glob_eta = 0.1;
 
 	/* Initialize the seed: srand() is used e.g. in randomSample above,
 	 * while seed_r is used e.g. when parallelization is enables.
@@ -136,8 +137,8 @@ int main() {
 	printf("beta: %f\n", beta);
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
-	cov[0] = 0.7;
-	cov[3] = 1.2;	/* Specific tuning for the Corona case */
+	cov[0] = 0.2;
+	cov[3] = 2.0;	/* Specific tuning for the Corona case */
 	printf("Covariance matrix:\n");
 	printMat(cov, glob_dDom, glob_dDom);
 
@@ -151,8 +152,8 @@ int main() {
 	fillzero(raw_samples, glob_dDom * n_samples);
 	fillzero(km_results, (glob_dDom + 1) * centroids);
 	/* Starting point suitable for the Corona model */
-	start_pt[0] = 7.;//;fabs(rndmGaussian(0, 1., NULL));
-	start_pt[1] = 10.;//floor(rndmGaussian(100, 20, NULL));
+	start_pt[0] = 1.;//;fabs(rndmGaussian(0, 1., NULL));
+	start_pt[1] = 5.;//floor(rndmGaussian(100, 20, NULL));
 	printf("Starting point: \n");
 	printVec(start_pt, glob_dDom);
 	avrg_acceptance_rate = 
