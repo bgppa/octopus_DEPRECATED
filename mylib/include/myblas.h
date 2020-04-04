@@ -15,7 +15,7 @@ void fprintMat (FILE *F, const double *A, int n, int m);
 /* Pront to the screen/file a vector of dimension a, followed by newline */
 void printVec(const double *v, int n);
 void fprintVec(FILE *file, const double *v, int d);
-
+void printVecL(const double *v, int n);
 /* y = alpha*x + y, where y,x vectors, alpha scalar */
 void axpy(const double *x, double *y, int dim, double alpha);
 
@@ -96,5 +96,8 @@ int isequaltol(const double *v, const double *w, int d, double tol);
 
 /* Fill an array of dimension d with zeroes */
 void fillzero(double *v, int d);
+
+/* Fill an array v of dimension d with the value val */
+void fillWith (double val, double *v, int dim);
 
 #endif /* Header guard */

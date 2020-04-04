@@ -199,7 +199,9 @@ void kMeans(double *data, int len, int dim, int cent_num,
                 /* If there is no new centroid proposal, stop */
                 if (isequaltol(prev_centroids, next_centroids, 
                                                 cent_num * dim, 1e-4)) {
-                        printf("Centroid CONVERGENCE!\n");
+			if (verbose) {
+	                        printf("Centroid CONVERGENCE!\n");
+			}
                         iteration = max_iter; /* Exit from FOR */
                 }
         
@@ -221,8 +223,8 @@ void kMeans(double *data, int len, int dim, int cent_num,
         /* In the array frequencies, store the %frequency of each centroid.
          * (i.e. how many points are classified with its label */
         computeFreq(frequencies, cent_num, labels, len);
-        printf("Frequence compiute\n");
                 if (verbose) {
+			printf("Frequence compiute\n");
                      printf("frequencies: \n");
                      printVec(frequencies, cent_num);
                      printf("their sum = %f%%\n", nrm1(frequencies, cent_num));
@@ -257,13 +259,20 @@ void kMeans(double *data, int len, int dim, int cent_num,
  * in visualizing the results */
 double kmnsVisual(const double* km_results, int centroids, int domDim)
 {
-	printf("---- RECONSTRUCTED INPUT -----\n");
+	printf("----- POSTERIOR DISTRIBUTION (%d centroids) -----\n",
+			centroids);
 	for (int i = 1; i <= (domDim + 1) * centroids; ++i) {
 		if (i % (domDim + 1) == 1) {
+//			printf("\n");
 			printf("%.0f%%\t", km_results[i-1]);
+//			printf("\n");
 		} else {
-	                printf("%e%c", km_results[i-1],
+			/* The following printf is the original one, fine */
+	                printf("%.1e%c", km_results[i-1],
 				       	i % (domDim + 1) == 0 ? '\n' : ' ');
+/*			but we adopt this variant for the Corona model 
+			printf("\nparams[%d] = %.2e;", (i - 1) % domDim - 1,
+					km_results[i-1]);*/
 		}
 	}
 	return km_results[0];	/* Return the highest registered frequence */
@@ -273,28 +282,36 @@ double kmnsVisual(const double* km_results, int centroids, int domDim)
 /* Given the kmeans data in a bayesian context, determine the errors & res */
 double kmnsBayErr (const double* km_results, int centroids, int domDim,
 		void (*GG) (const double *, int, double *, int),
-		int codDim, const double *y, const double *true_u)
+		int codDim, const double *y, const double *true_u, int verbose)
 {
 	double nrmy = nrm2(y, codDim);
 	double *Gu = malloc(sizeof(double) * codDim);
 	double result = 0;
 	fillzero(Gu, codDim);
 	/* Step 0: printing the images */
-	printf("-------- IMAGES G(param) --------\n");
-	for (int i = 0; i < centroids; ++i) {
-		GG(km_results + i*(domDim+1) + 1, domDim, Gu, codDim);
-		printf("%.f%%\t", km_results[i * (domDim +1)]);
-		printVec(Gu, codDim);
+	if (verbose) {
+//		printf("-------- IMAGES G(param) --------\n");
+		for (int i = 0; i < centroids; ++i) {
+			GG(km_results + i*(domDim+1) + 1, domDim, Gu, codDim);
+//			printf("%.f%%\t", km_results[i * (domDim +1)]);
+//			printVec(Gu, codDim);
+		}
 	}
 	/* Step 1: computing residues */
-	printf("-------- RESIDUALS --------\n");
+	if (verbose) {
+		printf("-------- RESIDUALS --------\n");
+	}
 	for (int i = 0; i < centroids; ++i) {
 		GG(km_results + i*(domDim+1) + 1, domDim, Gu, codDim);
 		if(i == 0) {result = nrm2dist(Gu, y, codDim) * 100. / nrmy;}
-		printf("%.f%%\t%.2f%%\n", 
-			km_results[i * (domDim +1)],
-			nrm2dist(Gu, y, codDim) / nrmy * 100.);
-	} free(Gu);
+		if (verbose) {
+			printf("%.f\t%e\t%.2f%%\n", 
+				km_results[i * (domDim +1)],
+				nrm2dist(Gu, y, codDim),
+				nrm2dist(Gu, y, codDim) / nrmy * 100.);
+		}
+	}
+	free(Gu);
 	/* Step 2: computing error, if possible */
 	if (true_u != NULL) {
 		double nrmu = nrm2(true_u, domDim);
@@ -304,8 +321,10 @@ double kmnsBayErr (const double* km_results, int centroids, int domDim,
 				result = nrm2dist(km_results+i*(domDim+1) + 1,
 				true_u, domDim) * 100. / nrmu;
 			}
-			printf("%.f%%\t%.2f%%\n",
+			printf("%.f\t%e\t%.2f%%\n",
 				km_results[i * (domDim + 1)],
+				nrm2dist(km_results+i*(domDim+1) + 1,
+				true_u, domDim),
 				nrm2dist(km_results+i*(domDim+1) + 1,
 				true_u, domDim) * 100. / nrmu);
 		}

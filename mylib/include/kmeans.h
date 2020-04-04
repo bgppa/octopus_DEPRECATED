@@ -11,6 +11,7 @@ double kmnsVisual(const double* km_results, int centroids, int domDim);
 
 double kmnsBayErr (const double* km_results, int centroids, int domDim,
                 void (*GG) (const double *, int, double *, int),
-                int codDim, const double *y, const double *true_u);
+                int codDim, const double *y, const double *true_u,
+		int verbose);
 
 #endif

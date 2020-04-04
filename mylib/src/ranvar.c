@@ -87,6 +87,16 @@ double rndmGaussian(double mean, double variance, unsigned int *private_seed)
         }
 }
 
+double old_rndmGaussian(double mean, double variance, unsigned int *private_seed)
+{
+	double res = -6.;
+	for (int i = 0; i < 12; ++i) {
+		res += rndmUniform(private_seed);
+	}
+	return mean + sqrt(variance) * res;
+}
+
+
 
 /* Simplified Gaussian sampling: sample a d-dimensional Gaussian having
  * DIAGONAL covariance matrix and mean x. The new values are directly
@@ -231,6 +241,88 @@ void rndmNdimGaussian(double *m, const double *C, int d,
         free(y);
         free(sig);
         if (to_free) { free(m); }
+}
+
+
+/* Simple mean and variance estimator */
+int meanAndVar (double *values, int dim, int n, double *mean, double *var,
+		double *conf_int)
+{
+	/* n values each array of length dim */
+	fillzero (mean, dim);
+	fillzero (var, dim);
+	if (conf_int != NULL) {
+	fillzero (conf_int, dim); }
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < dim; ++j) 
+			{ mean[j] += values[j + i * dim]; }
+	}
+	for (int i = 0; i < dim; ++i) 
+		{ mean[i] /= (double) n; }
+	/* Ok, now the array of means is ready */
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < dim; ++j) 
+			{ var[j] += pow( values[j + i * dim] - mean[j], 2.); }
+	}
+	for (int i = 0; i < dim; ++i) 
+		{ var[i] /= (double) (n - 1); }
+	if (conf_int != NULL ) {
+	for (int i = 0; i < dim; ++i) 
+		{ conf_int[i] = sqrt(pow(1.96, 2.) * var[i] / n); }
+	}
+return 1;
+}
+
+double meanAndVarG (double *values, int dim, int n, double *mean, double *var, 
+			double *conf_int,
+			void (*GG) (const double *, int, double *, int),
+			int codim, double *true_x, double *y)
+{
+        /* n values each array of length dim */
+        fillzero (mean, dim);
+        fillzero (var, dim);
+	if (conf_int != NULL) {
+	fillzero (conf_int, dim); }
+        for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < dim; ++j)
+                        { mean[j] += values[j + i * dim]; }
+        }
+        for (int i = 0; i < dim; ++i)
+                { mean[i] /= (double) n; }
+        /* Ok, now the array of means is ready */
+        for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < dim; ++j)
+                        { var[j] += pow(values[j + i * dim] - mean[j], 2.); }
+        }
+        for (int i = 0; i < dim; ++i)
+                { var[i] /= (double) (n - 1); }
+	/* Now estimate the error of the mean w.r.t. y or the true_x */
+	/* Estimate the 95% confidence interval for each mean point */
+	if (conf_int != NULL) {
+	for (int i = 0; i < dim; ++i) 
+		{ conf_int[i] = sqrt(pow(1.96, 2.) * var[i] / n); }
+	}
+	/* Compute the G errors w.r.t. the bayesian inverse problem context */	
+	double err = 0;
+	if (true_x != NULL) {
+		err = nrm2dist(mean, true_x, dim) / nrm2(true_x, dim) * 100.;
+	} else {
+		double *mean_img = malloc(sizeof(double) * codim);
+		assert (mean_img != NULL);
+		GG (mean, dim, mean_img, codim);
+		err = nrm2dist(mean_img, y, codim) * 100. / nrm2(y, codim);
+		free (mean_img);
+	}
+	printf("E(X): ");
+	if (conf_int != NULL){
+	for (int i = 0; i < dim; ++i) 
+		{ printf("%e +- %e; ", mean[i], conf_int[i]); }
+	}
+	else printVec(mean, dim);
+	printf("Var(X): ");
+	printVec (var, dim);
+//	printf("%s mean err: %.2f%%\n",true_x==NULL ? "_res_" : "_true_", err);
+	return err;
 }
 
 /* FROM NOW ON THERE IS NO PARALELIZATION IMPLE<EMTED */

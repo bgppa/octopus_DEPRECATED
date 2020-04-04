@@ -58,8 +58,20 @@ void printVec(const double *v, int d)
         for (int i = 0; i < d; ++i) {
                 printf("%.3e ", v[i]);
         }
-        printf("\n");
+	printf("\n");
 }
+
+/* PrintVec without newline at the end, so on the same Line*/
+void printVecL(const double *v, int d)
+{
+        assert(v != NULL);
+        assert(d > 0);
+
+        for (int i = 0; i < d; ++i) {
+                printf("%.3e ", v[i]);
+        }
+}
+
 
 /* Print to a file the contento of a d dimensional array */
 void fprintVec(FILE *F, const double *v, int d)
@@ -417,3 +429,12 @@ void fillzero(double *v, int dim) {
 		v[i++] = 0.;
 	}
 }
+
+void fillWith (double val, double *v, int dim)
+{
+	assert (v != NULL && dim > 0);
+	for (int i = 0; i < dim; ++i) {
+		v[i] = val;
+	}
+}
+
