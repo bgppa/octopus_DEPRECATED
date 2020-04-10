@@ -15,7 +15,7 @@
 
 #define PERCENTAGE 3 /* Check better */
 #define PARALLEL 1
-#define TEST_MODE 1
+#define TEST_MODE 0
 
 /* Only global variables required: eta, the noise, glob_y.
  * They will be initialized via the function randomInput,
@@ -104,7 +104,7 @@ int yFromFile (int ignore_n_days, const char *filename, int verbose) {
 	/* Alternative option for the noise-free cases */
 //	fillWith(0.1, glob_eta, glob_dCod);
 	if (verbose) {
-		printf("Diaginal of the noise covariance matrix:\n");
+		printf("Diagonal of the noise covariance matrix:\n");
 		printVec(glob_eta, glob_dCod);
 		printf("\n");
 	}
@@ -117,14 +117,16 @@ int yFromFile (int ignore_n_days, const char *filename, int verbose) {
 void randomInput (double *x)
 {
 	assert(x != NULL);
-	x[0] = rndmUniformIn(0.01, 0.60, NULL);
-	x[1] = rndmUniformIn(100000, 400000, NULL);
+	/* Dimension of x = glob_dDom */
+	x[0] = rndmUniformIn(0.01, 0.40, NULL);
+	x[1] = rndmUniformIn(10000, 400000, NULL);
+//	x[2] = rndmUniformIn(0, 3., NULL);
 	printf("X:\t");
 	for (int i = 0; i < glob_dDom; ++i) {
 		printf("%e ", x[i]);
 	} printf("\n");
 	/* Random initial condition for the ODE */
-	glob_initCond = abs(rndmGaussian(100, 50, NULL));
+	glob_initCond = rndmUniformIn(20., 100., NULL);
 	printf("Set initial ODE condition to: %f\n", glob_initCond);
 	/* Now produce y = G(x) */
 	G(x, glob_dDom, glob_y, glob_dCod);
@@ -136,13 +138,13 @@ void randomInput (double *x)
 	/* Now set the noise, we propose two options: */
 	for (int i = 0; i < glob_dCod; ++i) {
 		/* According to the measure's value itself */
-//		glob_eta[i] = fabs(glob_y[i]);
+		glob_eta[i] = fabs(glob_y[i]);
 		/* The noise-free case, for parameter tuning */
-		glob_eta[i] = 0.1;
+//		glob_eta[i] = 0.1;
 	}
-	printf("[noise-free]\n");
-//	printf("Noise diagonal:\n");
-//	printVec(glob_eta, glob_dCod);
+//	printf("[noise-free]\n");
+	printf("Noise diagonal:\n");
+	printVec(glob_eta, glob_dCod);
 	/* Re-set y by addding the noise, so to have y = G(X) + eta */
 	for (int i = 0; i < glob_dCod; ++i) {
 		glob_y[i] += rndmGaussian(0., glob_eta[i], NULL);
@@ -155,10 +157,13 @@ void randomInput (double *x)
 //	for (int i = 0; i < glob_dCod; ++i) {
 //		printf("%d %.f\n", i+1, glob_y[i]);
 //	}
+//	getchar();
 }
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
+	char *name_file_posterior = malloc(sizeof(char) * 200);
+	FILE *file_posterior = NULL;
 #if TEST_MODE
 	glob_dCod = floor(rndmUniformIn(10, 50, NULL));
 	printf("Number of observations: %d\n", glob_dCod);
@@ -175,23 +180,28 @@ int main(int argc, char **argv) {
 	glob_dCod = to_day - from_day + 1;
 	char *filename = malloc(sizeof(char) * 40);
 	filename[0] = '\0';
-	filename = strcat (filename, "datasets/");
+	filename = strcat (filename, "datasets/active/");
 	filename = strcat (filename, argv[3]);
 	printf("%s [%d, %d]\n", argv[3], from_day, to_day);
+	snprintf(name_file_posterior, 50, "posteriors/%d-%d-%s",
+		       from_day, to_day, argv[3]);
+	printf("Posterior on file %s\n", name_file_posterior);	
 //	printf("Codomain of dimension %d\n", glob_dCod);
 #endif
 
 	/* Let's start with the variables completely in common between all the
 	 * available methods */
-	int n_samples = 1000;	/* Number of samples to generate */
+	int n_samples = 4000;	/* Number of samples to generate */
 	int n_iterations = 20000;/* Depth of every chain generating 1 sample */
-	int centroids = 2;
+	int centroids = 3;
 	/* Covariance matrix for the Gaussian walk during the chain */
 	/* This is the covariance of the prior probability measure */
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
 	cov[0] = 0.01;
 	cov[glob_dDom + 1] = pow(5000, 2);
+//	cov[glob_dDom * glob_dDom - 1] = 0.2;
+//	printMat(cov, glob_dDom, glob_dDom);
 	/* 0 < beta < 1. small = conservative; hight = explorative */
 	double beta = 0.4;
 	/* Every chain has a starting point calculated as
@@ -268,7 +278,7 @@ int main(int argc, char **argv) {
 	* whose evaluation under G initialize glob_y */
 	randomInput(true_x);
 	printf("--- press a key to continue ---\n");
-	getchar();
+	//getchar();
 //	return 0;
 #else	
 	/* Otherwise we are in SIMULATION_MODE, where there is NO known
@@ -276,7 +286,7 @@ int main(int argc, char **argv) {
 	 * and the glob_y is read from a source .txt file, 
 	 * whose argoment indicates the days/lines to ignore */
 	yFromFile(from_day - 1, filename, 1);
-	getchar();
+//	getchar();
 #endif
 
 	/* THE RECONSTRUCTION PROCESS STARTS NOW! */
@@ -289,13 +299,22 @@ int main(int argc, char **argv) {
 		fillzero(km_results, (glob_dDom + 1) * centroids);
 #if TEST_MODE
 		printf("###### TEST %d of %d ######\n", a + 1, tot_test);
+		snprintf(name_file_posterior, 80,
+			       	"posteriors/toy_test%d.txt", a);		
 #endif
-		/* Determine how the chain starting points are chosen */
+		file_posterior = fopen(name_file_posterior, "w");
+		if (file_posterior == NULL){
+		printf("Unable to write on: %s\n", name_file_posterior);
+		getchar();
+		} else {
+			printf("Writing to file: %s\n", name_file_posterior);	
+		}
+	/* Determine how the chain starting points are chosen */
 		fillzero(start_pt, glob_dDom * n_samples);
 	        for (int i = 0; i < n_samples * glob_dDom; i += glob_dDom) {
-                	start_pt[i] = rndmUniformIn(0, 0.6, NULL);
+                	start_pt[i] = rndmUniformIn(0.01, 0.6, NULL);
 	                start_pt[i + 1] = rndmUniformIn(1000, 900000, NULL);
-//				500000;
+		//	start_pt[i + 2] = rndmUniformIn(0.1, 3.0, NULL);
 				//startMin + 
 //				abs(rndmGaussian(startMean, startCov, NULL));
 //				rndmGaussian(startMean, startCov, NULL);
@@ -303,8 +322,8 @@ int main(int argc, char **argv) {
 	//	printf("Starting points initialized\n");
 /*
  * 		printMat(start_pt, n_samples, glob_dDom);
-		getchar();
-		*/
+ * 		getchar();
+ */
 #if TEST_MODE
 		printf("Err/residual distibutions at the BEGINNING:\n");
 		kMeans(start_pt, n_samples, glob_dDom, centroids, max_kmeans,
@@ -336,6 +355,9 @@ int main(int argc, char **argv) {
 	//		allok, 1);
 			positive, 1);
 #endif
+		/* Plotting the posterior distribution */
+	//	printMat(raw_samples, n_samples, glob_dDom);
+ 		fprintMat (file_posterior, raw_samples, n_samples, glob_dDom);
 		printf("\nAverage acceptance rate: %.2f%%\n", 
 				avrg_acceptance_rate);
 		/* Now the samples have been stored into raw_samples. 
@@ -358,6 +380,7 @@ int main(int argc, char **argv) {
 				G, glob_dCod, NULL, glob_y);
 #endif
 		if (map_err < tol_err) { ++success; }
+		fclose(file_posterior);
 #if TEST_MODE
 		printf("***end of simulation %d***\n", a + 1);
 #endif
@@ -374,6 +397,7 @@ int main(int argc, char **argv) {
 	free(raw_samples);
 	free(mean);
 	free(var);
+	free(name_file_posterior);
 //	free(confi);
 #if TEST_MODE
 	free(true_x);

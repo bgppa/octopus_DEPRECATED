@@ -1,11 +1,9 @@
-dataset : beginning
+For Italy and Germany the day 1 is set to be
+the 1th of March.
 
-italy	:	20 Feb
-spain	:	24 Feb
-germany	:	25 Feb
-france	:	24 Feb
+Three folders, with total number of infected over time,
+only active cases, and deceased.
+
+To add: healed, when computing the SIR model.
+
 South Korea: 	19 Feb
-UK	:	26 Feb
-
-The datasets for the _deceased_ are:
-italy	:	26 Feb

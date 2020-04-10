@@ -2,28 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 
-int glob_dDom = 2; /* <- full general logistic case */
+//int glob_dDom = 2; /* <- full general logistic case */
+int glob_dDom = 2; /* Testing the general logistic law */
 double glob_initCond = -1;
 int glob_dCod = 10;
 
-/* Generalized logistic map, the most esoteric one with 6 parameters! */
-double general_6 (const double * cff, double t) 
-{
-	/* cff is an array containing the 5 parameters I need:
-	 * A, K, B, ni, Q, C, so they are with array indeces:
-	 * 0, 1, 2, 3 , 4, 5 */
-	return cff[0] + (cff[1] - cff[0]) /
-		pow( cff[5] + cff[4] * exp(- cff[2] * t), 1./cff[3]);
-}
 
-double general_5 (const double * cff, double t) 
+double richard (double alpha, double N, double N0, double ni, double t)
 {
-	/* cff is an array containing the 5 parameters I need:
-	 * K, B, ni, Q, C, so they are with array indeces:
-	 * 0, 1, 2, 3 , 4, */
-	double A = 571; /* STarting number of infected chinese */
-	return A + (cff[0] - A) /
-		pow( cff[4] + cff[3] * exp(- cff[1] * t), 1./cff[2]);
+	double Q = - 1. + pow((N / N0), ni);
+	return N / pow(1. + Q * exp(-alpha * ni * t), 1. / ni);
 }
 
 double gompertz (double alpha, double N, double N0, double t)
@@ -35,6 +23,18 @@ double logistic (double alpha, double N, double N0, double t)
 {
 	return (N0 * exp(alpha*t)) / (1. - N0/N * (1. - exp(alpha*t)));
 }
+
+#if 0
+double exGomp (double alpha, double N, double N0, double a, double S, double t)
+{
+	double T = 1. / a * log(S / N0);
+	if (t < T) {
+		return N0 * exp (a * t);
+	} else {
+		return gompertz (alpha, N, S, (double) t);
+	}
+}
+#endif
 
 /* G operator to be inverted: since the goal is recontructing the parameters 
  * starting from 20 time observations, G does the converse:
@@ -54,9 +54,10 @@ void G(const double* a_n, int due, double *obs, int num_obs)
 	/* __ RICORDA DI MODIFICARE IL FOR */
 	for (int i = 1; i < num_obs; ++i) {
 //	for (int i = 0; i < num_obs; ++i) {
-//		obs[i] = gompertz (a_n[0], a_n[1], obs[0], (double) i);
-		obs[i] = logistic (a_n[0], a_n[1], obs[0], (double) i);
+		obs[i] = gompertz (a_n[0], a_n[1], obs[0], (double) i);
+	//	obs[i] = logistic (a_n[0], a_n[1], obs[0], (double) i);
+//	obs[i] = exGomp (a_n[0], a_n[1], obs[0], a_n[2], a_n[3], (double) i);
 //		obs[i] = exp(a_n[0] * (double) i + a_n[1]);
-//		obs[i] = general_5 (a_n, (double) i);
+//	obs[i] = richard (a_n[0], a_n[1], obs[0], a_n[2], (double) i);
 	}
 }

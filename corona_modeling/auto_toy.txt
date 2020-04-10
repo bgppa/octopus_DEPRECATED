@@ -1,0 +1,5 @@
+#!/bin/bash
+for i in {1..35}
+do
+	./main $i 45 toy.txt
+done

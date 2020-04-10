@@ -13,6 +13,8 @@ int main(int argc, char** argv) {
 	params[0] = atof(argv[1]);
 	params[1] = atof(argv[2]);
 	glob_initCond = atof(argv[3]);
+//	params[2] = atof(argv[4]);
+//	params[3] = atof(argv[5]);
 
         G(params, num_params, t, num_days);
 

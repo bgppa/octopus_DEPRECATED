@@ -1,7 +1,7 @@
 #!/bin/bash
-# The German consists of 36 days.
+# The German consists of 37 days.
 for i in {1..27}
 do
-	./main $i 36 germany.txt
+	./main $i 37 germany.txt
 	printf "\n"
 done
