@@ -1,0 +1,317 @@
+\documentclass[6pt]{article}
+\title {DRAFT: Some remarks on Corona modeling}
+
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\newtheorem{deff}{Definition}
+
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\begin{document}
+\maketitle
+\section{Introduction}
+A goal in Coronavirus modeling it to describe the dynamic in time $t$ of the number of infected people $Y(t)$.
+It is possible to apply again laws that revealed to be effective in similar circumstances, but unfortunately the datasets
+on which perform checking are very limited and one needs answers as soon as possible.
+Indeed, only China and Korea are managing to stop the propagation, therefore are our only model-checking resources.
+
+After reading various papers online, I understood how in general:
+
+\begin{enumerate}
+\item the chosen laws are Gompertz or Logistic, interpolated on a \textbf{full-time} dataset (from day 0 until today);
+\item parameters estimation is done by using \textbf{classical statistics};
+\end{enumerate}
+
+From now on we abbreviate the curves above as GL and LL, respectively. Their effectiveness is something understood in many related fields,
+and they work well which China and South Korea. On the other hand, they currently fail in Italy.
+
+Motivated mainly by this effect, I'd like to propose some small variants that will produce similar good results for China and Korean too, \emph{and}
+for Italy, at least until today 24th of March.
+
+Briefly speaking, I slightly extend the classical approach above by claiming:
+\begin{enumerate}
+\item GL and LL must be used only on a \textbf{partial time} interval and must respect coherent ODE time stopping properties;
+\item an alternative \textbf{Bayesian interpolation} might help in controlling measurements error;
+\end{enumerate}
+
+With respect to $(1)$, I'd like to "introduce" the notion of \emph{forward} and \emph{backward stability}. They are straightforward, but writing them black on white
+helped me a lot. Dealing with $(2)$, I interpret the interpolation as a Bayesian Inverse problem and use the tools I am studying during my PhD.
+Finally, of course application to other Countries (mainly Germany, France and Spain) are in progress.
+
+\section{Gompertz and Logistic, quick informal overview}
+The only two quantitative papers available online estimate the Coronavirus propagation by using the Gompertz or the Logistic curve
+on the full available datasets.
+They are S-shaped graphs which "start exponentially, encounters a slowdown, then flat" both governed by two parameters, call
+ them $\alpha$ and $N$. The first represents the "strength" of the counter measures, the second the asymptotic number of infected.
+GL and LL have similar property and differs only in the "strictness of the S"; which one works better is not known, but both are
+very easy to work with and give often similar results.
+
+In practice I observed $\alpha$ usually in the range $(0, 1)$. Example: if we fix $N$, and consider two models with $\alpha_1 = 0.1$,
+$\alpha_2 = 0.01$, the former one reaches $N$ much faster than the second (holds for GL and LL, both, ADD IMAGE).
+
+In my opinion, the intuitive explanation is worth to be mentioned.
+In GL and LL we basically have an exponential law slowed down with a rate of $\alpha t$ (not precisely that, but more or less).
+So: "the more the time goes, the stronger the curve is stopped".
+At the very beginning the counter effects are weak, but they reinforce themselves in time.
+
+My remark is: \emph{what if there are NO countermeasures at all} for a certain initial period?
+This is precisely the situation in Italy, and in my opinion the reason for with GL and LL (on a full dataset) are currently not working.
+Conversely, both interpolation and prediction are successful for China and Korea, both Countries that 
+adopted strong countermeasures from the very beginning.
+
+In other words, I claim:
+
+\emph{the GL / LL models are effective but only from the moment where suitable protecting measures come into play}.
+
+\section{Gompertz and Logistic on a subinterval}
+Let's suppose to have a time span dataset from day $0$ to $T$. The approaches that I read online claim: use GL / LL on the full dataset.
+I disagree on that, rather claim: there exists a day $K$ such that GL / LL makes sense on $[K, T]$, but not on $[0, T]$.
+As explained before, the reasoning beyond is due to the fact that GL and LL assume the presence of an increasing countermeasure,
+and realistically it can be completely absent for the first $K$ days.
+
+Therefore the question: how to find $K$?
+
+Let's define $D$ as the minimal number of $D$ays required to detect a GL / LL behavior. It's not a rigorous definition, but the meaning is clear:
+if you use only, say, two days $K$, $K+1$, you cannot hope to have any meaningful interpolation. In practice I found $D$ to be around $5-6$ days,
+but it's heuristic (of course, working with China, Korea, and random-generated toy-models).
+
+The first property required for a candidate $K$, is the following:
+
+\begin{deff}[forward stability]
+By increasing $n = 0, 1, 2, \dots$, the parameter estimation of $\alpha$ and $N$ on every right-increasing intervals $[K, K + D + n]$, 
+until reaching $[K, T]$, must produce the same results (up to approximation errors, of course).
+\end{deff}
+
+Note that for $n = 0$ we have the minimum amount of days in which we consider the interpolation to be meaningful.
+What described now is surely obvious and understood. Now, I'd like to add a criteria \emph{more}.
+
+
+Both the GL and LL curve are not "just" kind of shapes, but rather a solutions of an (elementary) ODE. This is very important and possibly underestimated.
+
+Indeed, call $G_X(t)$ the solution at time $t$ w.r.t. initial conditions at time $X$. So, $G_0(t)$ is the GL/LL curve with conditions set to time zero, etc...
+Being an ODE it holds: $G_X(t) = G_0(t + X)$ (To do: write better, but it's the classical ODE property of stopping / starting the equation).
+
+
+What does it imply in practice? 
+
+In means that if we had a dataset $[R, T]$ obeying the GL/LL, ($R$ some time, but enough small to have $R + D < T$) then the backward stability must hold!
+
+\begin{deff}[backward stability]
+Let $\alpha$, $N$ be the parameter estimated on the interval $[R, T]$. Then they must be the same on every other left-decreasing interval
+$[R + n, T]$ (with $R + n + D < T$, i.e. leaving enough days to allow a meaningful interpolation).
+\end{deff}
+
+Therefore to check the forward stability on a candidate $K_1$, we require stable parameters estimations on all 
+the increasing intervals $[K_1, K_1 + D + n]$, until $[K_1, T]$. This is a general required statistical property, not specific for this case.
+This is the same as saying "If a prediction is true, must agree on every future time".
+
+Conversely, to control if a point $K_2$ satisfies backward stability we look from "now", time $T$, back to $K_2$, than back to $K_2 + 1$, etc...
+Since GL and LL are ODEs, one must obtain the same parameter estimation. This is something not generally true and caused only from the fact
+that the curve considered are also proved to be ODE solutions.
+
+My hypothesis is: only if $K$ satisfies \emph{both} the forward and the backward stability, then GL and LL are appropriate models for $[K, T]$.
+
+In few words I expressed the idea of using the Gompertz or Logistic Law on a reduced time-interval $[K, T]$ instead of
+$[0, T]$, and offered an algorithmic way to find $K$ based on statistical and ODEs property.
+
+Finally, one of course must ask: how does it behave w.r.t. real data?
+Not surprisingly, China and Korea shows a $K$ around $3-4$ days (on a dataset longer that 1 Months), therefore showing how GL and LL
+can be actually used on the full dataset with no strong difference. But the main point lies with Italy.
+On a dataset spanning from [20th February, 20th March], I estimated a $K$ to be around the 12th of March. The given parameters produce results in accordance
+to the official data until today, 23rd of March. Of course, it is too soon to make any kind of conclusion, but we are intrinsically subjected to very strict
+time.
+
+\section{Interpolation as a Bayesian Inverse Problem}
+Given a continuous map $G: \mathbb{R}^n \to \mathbb{R}^m$, one is often interested in finding a preimage of a point $y \in \mathbb{R}^m$ noised by a Gaussian
+$\eta$ with some covariance. In other words, one in interested in finding $x \in \mathbb{R}^n$ such that $G(x) = y + \eta$.
+The meaning of "equal" must be intended of course up to some error, and the "quality" of a candidate $x$ is measured 
+through the norm $\norm{x - G(y)}$ weighted by the covariance of $\eta$ (write more details ?).
+
+The map $G$ might admit different preimages, or none at all. All there problems are circumvented by choosing a probabilistic approach.
+Instead of offering a single \emph{point} $x$ solving the equation above, one looks for a probability distribution on the domain $\mathbb{R}^n$.
+
+In the Bayesian approach one must start with an initial guess on $x$, modeled by a Gaussian distribution called $\emph{prior}$ distribution
+(if there is no suspect about $x$, you can choose a centered one with very high covariance).
+Then one samples a candidate $x_1$ and accept/reject according to some rule related to the prior, $G$, $\eta$ and $y$.
+After having repeated the process multiple times, one finds
+a cloud of candidates for $x$: the \emph{posterior} distribution (on $\mathbb{R}^n$).
+
+
+I am not describing now the way in which this process is done: can add, simply pCN and Hamiltonian Monte Carlo for sampling, k-means algorithm to
+"plot" histograms on $\mathbb{R}^n$ and obtaining a limited list of candidates (general topic not specific for the Corona simulations).
+
+For problems that admit a precise inverse solutions, it is known that the posterior distribution converges to the Dirac delta when the noise $\eta$
+is decreased.
+
+Until now I pointed out the Bayesian Inversion Problem, as a way to obtain preimage of maps in presence of noised measurements. The question is therefore:
+how does it apply for the Coronavirus modeling?
+
+Let's consider the Gompertz Law GL, starting say from time $0$. It depends on two parameters $\alpha, N$ and once they are fixed, it produces a series of
+\emph{observations} from time $0, 1,...$ to $T$. Call them $GL_{\alpha, N}(t)$.
+
+Since we are interested in \emph{deducing} $\alpha$ and $N$ from the observed values, in other words we are in the same setting described above.
+With such a notation, we can set $G = GL : \mathbb{R}^2 \to \mathbb{R}^T$ defined as
+$\alpha, N \mapsto GL_{\alpha, N} (0), \dots, GL_{\alpha, N} (T)$.
+
+Deducing the parameters from data is known as interpolation, therefore we have just said: Bayesian inversion problem might offer a tool to perform interpolation
+in the context of noised data.
+
+A priori it still not completely clear which maps $G$ can be inverted in this way, therefore the library I wrote performs a series of tests on artificial-generated
+data in order to verify the solidity of the algorithm. It worked well in the case of the Gompertz operator defined above (same for Logistic and exponential growth),
+therefore I decided to use it on real data.
+
+For the moment, as a merely temporarily measure, I set the noise to be very small. It is unrealistic, but a first step.
+The obtained parameters are always distributed as Dirac deltas with two significant digits 
+(as expected, since the problem admits a unique solution), but the plan is to increase the
+noise and observe how such a distribution on $\mathbb{R}^2$ behaves.
+
+\section {Conclusion}
+Both the Gompertz and the Logistic Laws are good candidate for a macroscopic modeling. Given a datasets from time $0$ to $T$, I proposed an algorithmic way
+to find a day $K$ to be considered as starting point of the models above. Furthermore, I mentioned the Bayesian Inverse interpolation as a potential tools for
+facing measurements errors and make probabilistic prediction, although I have not yet tested in for large errors.
+
+\section {Appendix: further ideas}
+Both the Gompertz law and the Logistic map belong to a general family of curves known under the name of "Generalized Logistic Map". They are solutions
+of the Richard's Differential Equation (ODE), and depend on a variable number of parameters (3, 4, 5, or 6).
+It might be interesting trying using that model instead GL or LL. I quickly attempted with the 6-param-case: the interpolation on the whole 
+Chinese/Korean dataset is spectacular, but the prediction property is poor.
+As expected, this is a case of overfitting. I am currently trying with the alternatives depending on less parameters.
+
+\section{Scheduled}
+In very few words: check the models on other Countries, try with larger errors, try the Generalized Logistic Map.
+
+\section {Experimental results: Infected VS Time}
+Our goal is to find a possibly good candidate for $K$ in the German, Italian, Chinese and Korean dataset, both in the case of logistic and Gompertz equations.
+Predictions are then made and the results commented.
+
+\subsection {China}
+The Chinese dataset here considered spans for a total of 44 days, starting
+on the INSERT-DATE. The spreading of the virus found has now been practically
+stopped, therefore further days has been not added. 
+
+\section {Experimental results: Deaths VS Time}
+Repeat exactly the same reasoning, using the deaths datasets instead.
+
+\section{The mathematical model and the numerical problem}
+
+\subsection {The mathematical model}
+We choose two models for our studies, Gompertz and Logistic ODEs.
+Extensions are plannes, but they represent a good starting point to check
+the proposed techniques.
+
+\subsection{Parameter estimation and issues}
+Let's define as $x$ the parameters governing an ODE (e.g. $x = \{ \alpha, N\}$
+in the case of the Gompertz/Logistic law). Given a fixed initial condition here
+omitted, let $y = y(t)$ be the trajectory in time corresponding to $x$.
+If $\hat{x}$ (with corresponding trajectory $\hat{y}$) is now a new set of 
+parameters, it would be \emph{essential} to have an inequality of the form:
+\begin{equation}
+\norm{ x - \hat{x} } \leq M \norm{y - \hat{y} }
+\end{equation}
+
+for some constant $M$. Note that in the case of $ODEs$ this is not a continuity
+property on a single solution, rather on the family of them. 
+TO CHECK: it might be the stability criteria, e.g. Lyapunov, I am nore sure.
+(OR can prove it. e.g. with Banach-Steinhaus?)
+
+In practice the mentioned property is often tacitly assumed, and correspond
+to the idea that:
+\begin{itemize}
+\item given an observed trajectory, there is only one set of parameters 
+	capable of reproducing it;
+\item a small residual error, i.e. $\norm{y - \hat{y}}$ corresponds to a small
+	true error, i.e. $\norm{x - \hat{x}}$;
+\end{itemize}
+
+TO CHECK: does Gompertz / Logistic respect such a property? It would be TOP!
+
+
+\subsection {Inverse Bayesian estimation}
+The (continuous) inverse problem consists on having a known continous map
+$G: \mathbb{R}^n \to \mathbb{R}^m$, an \textbf{unknown} 
+input $x \in \mathbb{R}^n$ to be found from
+a known \emph{observation} $y = G(x) + \eta$, where $\eta$ is a centered
+gaussian random variable, called the noise, with some specified variance.
+
+In other words we are interested in performing an indirected measure
+(the value $x$) from a direct measure $y$ and the use of a scientific
+model $G$.
+
+A \emph{lot} of theoretical issues are here into play. To mention
+few of them, the map $G$ might admit different preimages, none at all,
+or the noise might send $y$ outside the range of $G$.
+
+Some of these problems are circumvented by minimizing some distance
+$\norm{G(x) - y}$ instead, but they might be
+insufficient e.g. for cases where $G$ is not differentiable or not injective.
+
+The \emph{bayesian} setting offers a way to overcome the mentioned issues
+by taking a probabilistic viewpoint. Instead of looking for a specific
+single point $x$, one considers a probabilty distribution "updated"
+ according to the values of $y$ by the use of Bayes's theorem.
+
+Let $\rho(x)dx$ be the density of a gaussian 
+on $\mathbb{R}^n$ representing our initial belief
+about $x$, called the \emph{prior}. 
+For instance, if experience suggests a preimage of $y$ 
+to be around the origin, we choose zero mean and small covariance.
+If no information is available, we start with a high-covariance matrix.
+Hints might come e.g. from numerical experiments, since
+the prior influences the effectiveness of the algorithm.
+
+Let $\eta(x)dx$ be the density of the noise (abuse of notation).
+By combining the Bayes's formula
+\begin{equation}
+\mathbb{P}[x | y] = \frac{ \mathbb{P}[y | x] \mathbb{P}[x]} {\mathbb{P}[y]}
+\end{equation}
+and the equation $y = G(x) + \eta$, we find:
+\begin{equation}
+\mu (x) \doteq \mathbb{P}[x|y] = \frac{ \eta(y - G(x)) \rho(x)} {\mathbb{P}[y]}
+\end{equation}
+Since the value of $y$ is fixed, the denominator is just
+the probability normalization constant. The new probability measure
+$\mu$ on $\mathbb{R}^n$ is called the \emph{posterior} and represents
+the best knowledge that we can conclude about $x$, updating our initial
+belief $\rho$ with the observation of $y$.
+
+A mathematically rigorous version of the formulaes above is available in
+the paper AAA, but we rather insist on a key point:
+the solution of the question "find a preimage of $y$" lies now in the ability
+of sampling from the posterior probability distribution.
+
+\subsection {MCMC - our algorithm}
+REcall notation
+
+To perform a single sample from the posterior distirbtuion,
+use MCMC with pCN algorithm. The logger the chain, the more reliable.
+
+Since we are interested of the full posterior (not on a single points),
+we repeat the procedure obtaining a cloud of samples. Then, they are
+clustered by using k-means in oder to read them more easily.
+
+\subsection {Using Bayesian Inversion as interpolator}
+Let's consider the Gompertz Law GL, starting say from time $0$
+(but the same reasoning apply to any other kind of model).
+It depends on two parameters $\alpha, N$ and once they are fixed,
+it produces a series of observations in time $0, 1,...$ until $T$.
+Call them $GL_{\alpha, N}(t)$.
+
+We are interested in \emph{deducing} $\alpha$ and $N$ from the observed values,
+realistically noised. In other words we are again in the bayesian inverse 
+setting by just defining 
+$G \doteq GL : \mathbb{R}^2 \to \mathbb{R}^T$ as
+$\alpha, N \mapsto GL_{\alpha, N} (0), \dots, GL_{\alpha, N} (T)$.
+
+Note that the continuity of $G$, here assumed, is precisely the same issue
+of TOADD-NUMBEROFPARAGRAPH. 
+
+IDEA: CAN I DEDUCE M EMPIRICALLY??? TRY!
+
+A priori it still not completely clear which maps $G$ can be inverted in this way, therefore the library I wrote performs a series of tests on artificial-generated
+data in order to verify the solidity of the algorithm. It worked well in the case of the Gompertz operator defined above (same for Logistic and exponential growth),
+therefore I decided to use it on real data.
+
+
+
+\end{document}

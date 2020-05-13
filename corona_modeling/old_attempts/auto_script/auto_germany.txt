@@ -1,0 +1,6 @@
+#!/bin/bash
+for i in {23..32}
+do
+	./main 18 $i germany.txt
+	printf "\n"
+done

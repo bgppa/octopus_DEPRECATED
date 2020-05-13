@@ -1,0 +1,6 @@
+#!/bin/bash
+for i in {1..37}
+do
+	./main $i 46 italy.txt
+	printf "\n"
+done

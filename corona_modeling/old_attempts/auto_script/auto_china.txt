@@ -1,0 +1,9 @@
+#!/bin/bash
+# The Chinese dataset shows a completed coronavirus
+# cycle, from beginning to end. It's composed by 44 days,
+# so we expect to find K at the beginnig.
+# Around day 22 suspict of a new infection wave.
+for i in {1..40}
+do
+	./main $i 50 china.txt
+done

@@ -1,0 +1,9 @@
+#!/bin/bash
+in=0
+en=0
+for i in {0..40}
+do
+	((in=1+i))
+	((en=20+i))
+	./main $in $en toy_gompertz.txt
+done
