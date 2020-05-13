@@ -1,7 +1,0 @@
-#!/bin/bash
-# The Italian dataset is composed by 37 days.
-for i in {1..37}
-do
-	./main $i 47 italy.txt
-	printf "\n"
-done

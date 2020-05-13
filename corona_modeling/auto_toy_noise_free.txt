@@ -1,5 +1,0 @@
-#!/bin/bash
-for i in {1..40}
-do
-	./main $i 50 toy_noise_free.txt
-done

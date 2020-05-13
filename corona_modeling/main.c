@@ -23,19 +23,35 @@
 double *glob_y;
 double *glob_eta;
 
+
+/* Take a positive integer and return the highest power
+* of 10 capable of diving it with a result > 1.
+* Eg: 300 -> 100, 23 -> 10, 4 -> 1 */
+double ten_power (int v)
+{
+        if (v <= 0) {
+                printf("arg_err : ten_power: must be positive (%d)!\n", v);
+                return 0;
+        }
+        int i = 0;
+        while (v / pow(10, i) > 1)
+                ++i;
+        return pow(10, i-1);
+}
+
+
 /* Control function: ensures that the parameters for the Gompertz
  * model are always positive - to be given to the pcn samples */
 int positive (const double *x, int dim)
 {
-	if (x[0] > 0 && x[0] < 1 && x[1] > 0)
+/*	if (x[0] > 0 && x[0] < 1 && x[1] > 0)
 		return 1;
 	return 0;
-/*
+	*/
 	for (int i = 0; i < glob_dDom; ++i) 
 		if (x[i] < 0)
 			return 0;
 	return 1;
-	*/
 }
 /* For the exponential interpolation, no restriction on parameters */
 int allok(const double *x, int dim) {return 1;}
@@ -99,7 +115,9 @@ int yFromFile (int ignore_n_days, const char *filename, int verbose) {
 	}
 	/* Now set the noise accordingly to the magnitude of the generated y*/
 	for (int i = 0; i < glob_dCod; ++i) {
-		glob_eta[i] = fabs(glob_y[i]);
+		/* EXPERIMENTAL */
+		glob_eta[i] =  fabs(glob_y[i]) / 20.;
+//		glob_eta[i] = ten_power(glob_eta[i]) / 2.;
 	}
 	/* Alternative option for the noise-free cases */
 //	fillWith(0.1, glob_eta, glob_dCod);
@@ -118,9 +136,12 @@ void randomInput (double *x)
 {
 	assert(x != NULL);
 	/* Dimension of x = glob_dDom */
-	x[0] = rndmUniformIn(0.01, 0.40, NULL);
-	x[1] = rndmUniformIn(10000, 400000, NULL);
-//	x[2] = rndmUniformIn(0, 3., NULL);
+	x[0] = rndmUniformIn(0.04, 1.0, NULL);
+	x[1] = rndmUniformIn(4000, 100000, NULL);
+	/* If we are in the Richard case */
+	if (glob_dDom == 3) {
+		x[2] = rndmUniformIn(0.01, 4.0, NULL);
+	}
 	printf("X:\t");
 	for (int i = 0; i < glob_dDom; ++i) {
 		printf("%e ", x[i]);
@@ -130,15 +151,15 @@ void randomInput (double *x)
 	printf("Set initial ODE condition to: %f\n", glob_initCond);
 	/* Now produce y = G(x) */
 	G(x, glob_dDom, glob_y, glob_dCod);
-	/*
 	printf("G(X):\t");
 	printVec(glob_y, glob_dCod);
 	printf("\n");
-	*/
 	/* Now set the noise, we propose two options: */
 	for (int i = 0; i < glob_dCod; ++i) {
 		/* According to the measure's value itself */
+		/* EXPERIMENAL */
 		glob_eta[i] = fabs(glob_y[i]);
+		//glob_eta[i] = pow(ten_power(glob_y[i]), 2.);
 		/* The noise-free case, for parameter tuning */
 //		glob_eta[i] = 0.1;
 	}
@@ -147,7 +168,7 @@ void randomInput (double *x)
 	printVec(glob_eta, glob_dCod);
 	/* Re-set y by addding the noise, so to have y = G(X) + eta */
 	for (int i = 0; i < glob_dCod; ++i) {
-		glob_y[i] += rndmGaussian(0., glob_eta[i], NULL);
+		glob_y[i] += rndmGaussian(0., glob_eta[i], NULL) / 20.;
 //		glob_y[i] += fabs(rndmGaussian(0., glob_eta[i], NULL));
 	}
 	printf("G(X) + NOISE: ");
@@ -171,16 +192,25 @@ int main(int argc, char **argv) {
 /* When NOT in test mode, must specify the range of days to read
  * and the considered dataset to be searched into ../datasets */
 #if !TEST_MODE
-	if (argc != 4) {
-		printf("syntax: fist_day last_day country.txt\n");
+	int N_samples = 12;
+	int N_iter = 12;
+	double covQ = 10000;
+	if (argc == 7) {
+		N_samples = atoi(argv[4]);
+		N_iter = atoi(argv[5]);
+		covQ = atof(argv[6]);
+	} else {
+		printf("./main from to country.txt sampl iter covQ\n");
 		return -1;
 	}
 	int from_day = atoi(argv[1]); /* Minimum is day 1 */
 	int to_day = atoi(argv[2]);
 	glob_dCod = to_day - from_day + 1;
-	char *filename = malloc(sizeof(char) * 40);
+	char *filename = malloc(sizeof(char) * 200);
 	filename[0] = '\0';
-	filename = strcat (filename, "datasets/active/");
+//	filename = strcat (filename, "datasets/active/");
+//	filename = strcat (filename, "datasets/total/");
+	filename = strcat (filename, "datasets/deceased/");
 	filename = strcat (filename, argv[3]);
 	printf("%s [%d, %d]\n", argv[3], from_day, to_day);
 	snprintf(name_file_posterior, 50, "posteriors/%d-%d-%s",
@@ -189,33 +219,28 @@ int main(int argc, char **argv) {
 //	printf("Codomain of dimension %d\n", glob_dCod);
 #endif
 
+
 	/* Let's start with the variables completely in common between all the
 	 * available methods */
-	int n_samples = 4000;	/* Number of samples to generate */
-	int n_iterations = 20000;/* Depth of every chain generating 1 sample */
-	int centroids = 3;
+	int n_samples = pow(2., N_samples);/* Number of samples to generate */
+	int n_iterations = pow(2., N_iter);
+	printf("%d samples each with %d iterations\n", n_samples, n_iterations);
+	/* Depth of every chain generating 1 sample */
+	int centroids = 10;
 	/* Covariance matrix for the Gaussian walk during the chain */
 	/* This is the covariance of the prior probability measure */
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
-	cov[0] = 0.01;
-	cov[glob_dDom + 1] = pow(5000, 2);
-//	cov[glob_dDom * glob_dDom - 1] = 0.2;
-//	printMat(cov, glob_dDom, glob_dDom);
+	cov[0] = pow(0.2, 2.);
+	cov[glob_dDom + 1] = pow((covQ/ 2.), 2.);
+	/* In the case of Richard */
+	if (glob_dDom == 3) {
+		cov[glob_dDom * glob_dDom - 1] = pow(0.5, 2.);
+	}
 	/* 0 < beta < 1. small = conservative; hight = explorative */
-	double beta = 0.4;
-	/* Every chain has a starting point calculated as
-	 * startMin + abs(gaussian(startMean, startCov)
-	 * in this way you are free to increase/decrease the randomization
-	 * of the starting points, stored in start_pt defined later */
-//	double startPtCov = pow(30000, 2);
-//	double startPtMin = 150000;
-//	double startPtMean = 150000;
-	/* Multiple reconstruction with the same data are done, to check
-	 * stochastic stability */
+	double beta = 0.01;
 	int tot_test = 1;
-	/* The error is set to be practically zero. In the future,
-	 * make this variable higher to model measuremen errors */
+
 
 	/* From now on, all the code should be untouched, since the parameters
 	 * are all set above */
@@ -223,7 +248,7 @@ int main(int argc, char **argv) {
 	double *var  = malloc (sizeof(double) * glob_dDom);
 	/* Initialize the seed: srand() is used e.g. in randomSample above,
 	 * while seed_r is used e.g. when parallelization is enables. */
-	//srand(time(NULL));
+//	srand(time(NULL));
 //	srand(1);
 	unsigned int *seed_r = malloc(sizeof(unsigned int) * n_samples);
 	assert(seed_r != NULL);
@@ -279,7 +304,6 @@ int main(int argc, char **argv) {
 	randomInput(true_x);
 	printf("--- press a key to continue ---\n");
 	//getchar();
-//	return 0;
 #else	
 	/* Otherwise we are in SIMULATION_MODE, where there is NO known
 	 * intput true_x, since it's the one we are looking to, 
@@ -311,40 +335,25 @@ int main(int argc, char **argv) {
 		}
 	/* Determine how the chain starting points are chosen */
 		fillzero(start_pt, glob_dDom * n_samples);
+	//	printf("Minimum Q: %f\n", glob_y[glob_dCod-1]);
+		printf("Q random in %f, %f\n", glob_y[glob_dCod-1], covQ);
 	        for (int i = 0; i < n_samples * glob_dDom; i += glob_dDom) {
-                	start_pt[i] = rndmUniformIn(0.01, 0.6, NULL);
-	                start_pt[i + 1] = rndmUniformIn(1000, 900000, NULL);
-		//	start_pt[i + 2] = rndmUniformIn(0.1, 3.0, NULL);
-				//startMin + 
-//				abs(rndmGaussian(startMean, startCov, NULL));
-//				rndmGaussian(startMean, startCov, NULL);
+                	start_pt[i] = rndmUniformIn(0.01, 0.9, NULL);
+			start_pt[i + 1] = 
+		       	rndmUniformIn(glob_y[glob_dCod - 1], covQ, NULL);
+			/* In the Richard case */
+			if (glob_dDom == 3) {
+			start_pt[i + 2] = rndmUniformIn(0.01, 0.9, NULL);
+			}
        		}
-	//	printf("Starting points initialized\n");
-/*
- * 		printMat(start_pt, n_samples, glob_dDom);
- * 		getchar();
- */
-#if TEST_MODE
-		printf("Err/residual distibutions at the BEGINNING:\n");
-		kMeans(start_pt, n_samples, glob_dDom, centroids, max_kmeans,
-			km_results, 0);
-		/* Visualize the data */
-		kmnsVisual(km_results, centroids, glob_dDom);
-		map_err = kmnsBayErr(km_results, centroids, glob_dDom,
-			G, glob_dCod, glob_y, true_x, 1);
-		printf("INITIAL MAP _actual_ error: %f%%\n", map_err);
-		meanAndVarG (start_pt, glob_dDom, n_samples, mean, var, NULL, 
-				G, glob_dCod, true_x, glob_y);
-#else
-//		map_err = kmnsBayErr(km_results, centroids, glob_dDom,
-//			G, glob_dCod, glob_y, NULL, 1);
-//		printf("INITIAL MAP _residual_ error: %f%%\n", map_err);
-//		meanAndVarG (start_pt, glob_dDom, n_samples, mean, var, confi, 
-//				G, glob_dCod, NULL, glob_y);
-#endif
-		/* Starting points organized. Perform MCMC */
+	//	printf("Initial error distribution\n");
+	//	meanAndVarRes (start_pt, glob_dDom, n_samples,
+//			       G, glob_dCod, glob_y);
+
+
+		/* Starting points...DONE. Perform MCMC */
 		avrg_acceptance_rate = 
-#if PARALLEL /* Parallel pcn */
+#if PARALLEL	/* Parallel pcn */
 	        prll_uPcnSampler(potU, glob_dDom, start_pt, n_samples,
 				n_iterations, raw_samples, beta, cov, seed_r,
 				positive);
@@ -352,32 +361,59 @@ int main(int argc, char **argv) {
 #else		/* Ordinary pcn */
 	        uPcnSampler(potU, glob_dDom, start_pt, n_samples, 
 			n_iterations, raw_samples, beta, cov, 
-	//		allok, 1);
-			positive, 1);
+		//		allok, 1);
+				positive, 1);
 #endif
-		/* Plotting the posterior distribution */
-	//	printMat(raw_samples, n_samples, glob_dDom);
- 		fprintMat (file_posterior, raw_samples, n_samples, glob_dDom);
+	//	printf("\nFINAL ERROR DITRIBUTION: \n");
+ 	//	meanAndVarRes (raw_samples, glob_dDom, n_samples,
+	//		       G, glob_dCod, glob_y);
+
+		double *expectation = malloc(sizeof(double) * glob_dDom);
+		double *variance = malloc(sizeof(double) * glob_dDom);
+		meanAndVar (raw_samples, glob_dDom, n_samples, expectation,
+				variance);
+		printf("E[parameters] = ");
+		printVec(expectation, glob_dDom);
+		free(expectation);
+		free(variance);
+		
+		/* Plot the posterior distribution in the file_posterior */
+		fprintMat (file_posterior, raw_samples, n_samples, glob_dDom);
 		printf("\nAverage acceptance rate: %.2f%%\n", 
 				avrg_acceptance_rate);
-		/* Now the samples have been stored into raw_samples. 
-		 * Clean them by using kmean*/
+
+		/* The samples have been stored into raw_samples. To increase
+		 * output readability, order them by using kmean */
 		fillzero(km_results, (glob_dDom + 1) * centroids);
-		kMeans(raw_samples, n_samples, glob_dDom, centroids, max_kmeans,
-			km_results, 0);
+		kMeans(raw_samples, n_samples, glob_dDom, centroids, 
+				max_kmeans, km_results, 0);
+
+		/* km_results contain the centroids in the format
+		 * frequence,centroid. Let's create a vector containing
+		 * only the centroids */
+		double *km_clean = malloc(sizeof(double) * centroids *
+				glob_dDom);
+		for (int i = 0; i < centroids; ++i) {
+                copy(km_results + i*(glob_dDom+1) + 1, 
+				km_clean + i * glob_dDom, glob_dDom);
+		}
+		printf("List of centroids: \n");
+		printMat(km_clean, centroids, glob_dDom);
+		//getchar();
+ 		meanAndVarRes (km_clean, glob_dDom, centroids,
+			       G, glob_dCod, glob_y);
+		//getchar();
+
+
 		kmnsVisual(km_results, centroids, glob_dDom);
 #if TEST_MODE
 		map_err = kmnsBayErr(km_results, centroids, glob_dDom,
 			G, glob_dCod, glob_y, true_x, 1);
 		printf("FINAL MAP _actual_ error: %f%%\n", map_err);
-		meanAndVarG (raw_samples,glob_dDom,n_samples, mean, var, NULL,
-				G, glob_dCod, true_x, glob_y);
 #else
 		map_err = kmnsBayErr(km_results, centroids, glob_dDom,
 			G, glob_dCod, glob_y, NULL, 1);
 		printf("res_err : %f%%\n", map_err);
-		meanAndVarG (raw_samples,glob_dDom,n_samples, mean, var, NULL, 
-				G, glob_dCod, NULL, glob_y);
 #endif
 		if (map_err < tol_err) { ++success; }
 		fclose(file_posterior);
@@ -398,11 +434,11 @@ int main(int argc, char **argv) {
 	free(mean);
 	free(var);
 	free(name_file_posterior);
-//	free(confi);
 #if TEST_MODE
 	free(true_x);
 #else
 	free(filename);
 #endif
+	printf("[%d samples, %d iterations]\n", n_samples, n_iterations);
 	return 0;
 }

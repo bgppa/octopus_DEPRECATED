@@ -1,6 +1,0 @@
-#!/bin/bash
-# The Korean dataset consists of 41 days.
-for i in {1..34}
-do
-	./main $i 41 korea.txt
-done
