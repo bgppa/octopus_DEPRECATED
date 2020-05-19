@@ -221,14 +221,19 @@ double prll_uPcnSampler (double (*U) (int, const double*), int dim,
 				       	tmpn[n * dim + j] * beta;
 			}
 			/* Determine if the new proposal is accepted */
-			alpha[n]  =  min(exp(U(dim, smpls + n * dim) -
+			/* Ensure that we propose an actual number,
+			 * not a -infinity */
+			if (isinf(U(dim, x1n + n * dim)) == 0){
+				alpha[n]  =  min(exp(U(dim, smpls + n * dim) -
 					 U(dim, x1n + n * dim)), 1.);
-			if (rndmUniform(seed_r + n) <= alpha[n]) {
-				copy(x1n + n * dim, smpls + n * dim, dim);
-				++accepted[n];
+				if (rndmUniform(seed_r + n) <= alpha[n]) {
+					copy(x1n + n * dim, 
+							smpls + n * dim, dim);
+					++accepted[n];
 //				printf("n : %d. Current accepted: %f\n",n,
 //						accepted[n]);
 //				getchar();
+				}
 			}
 		}
 	}
