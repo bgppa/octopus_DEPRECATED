@@ -13,8 +13,8 @@ double prll_uPcnSampler (double (*U) (int, const double*), int dim,
 			const double *x, int num_sampl,
 			int iter, double *samples, double beta,
 			const double *cov,
-			unsigned int* seed_r,
-			int (*okconstraint) (const double *, int));
+			unsigned int* seed_r);
+//			int (*okconstraint) (const double *, int));
 
 double simple_pcn (double (*U) (int, const double*),
                 const double *start_pt, int dim,

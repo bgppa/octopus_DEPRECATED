@@ -175,6 +175,77 @@ double uPcnSampler (double (*U) (int, const double*), int dim,
 double prll_uPcnSampler (double (*U) (int, const double*), int dim, 
 		const double *x, int num_sampl, int iter, 
 		double *smpls, double beta, const double *cov,
+	       	unsigned int *seed_r)
+{
+	setbuf(stdout, NULL);
+#if! MPLS_PARALL
+	printf("\n\n*warning: prll_uPcnSampler: calling a parallel function,"
+		" but the support is DISABLED. Check the"
+	        " constant MPLS_PARALL in mpls.c\n");
+	printf("*It should work anyway, but with no benefits*\n");
+#endif
+	double *alpha = malloc(sizeof(double) * num_sampl);
+	/* Counters for estimating the acceptance rate */
+	double *accepted = malloc(sizeof(double) * num_sampl);
+	fillzero(accepted, num_sampl);
+	double mean_accepted = 0;
+	/* x1n contains the various proposals */
+	double *x1n = malloc(sizeof(double) * dim * num_sampl);
+	fillzero(x1n, dim * num_sampl);
+	/* We'll use a simple gaussian rw with covariance cov, the identity */
+	double *allzero = malloc(sizeof(double) * dim);
+	fillzero(allzero, dim);
+	double *tmpn = malloc(sizeof(double) * dim * num_sampl);
+	fillzero(tmpn, dim * num_sampl);
+	/* Fill smpls with multiple copies of x */
+	copy (x, smpls, dim * num_sampl);
+	/* Produce N samples, each stored in smpls */
+#if MPLS_PARALL
+	#pragma omp parallel for
+#endif
+	for (int n = 0; n < num_sampl; ++n) {
+		if (n % 100 == 0) {
+			printf(".");
+		}
+		for (int i = 0; i < iter; ++i) { /* Produce a sample */
+			/* Sample the gaussian in tmp */
+			fillzero (tmpn + n * dim, dim);
+			rndmDiagGauss (tmpn + n * dim, cov, dim, seed_r + n);
+//			rndmNdimGaussian(allzero, cov, dim,
+//				       	tmpn + n * dim, seed_r + n, 0);
+			/* Propose x1 as the weightes sum between that gaussian
+			 * and the previous x0, which is smpls[n*dim] */
+			for (int j = 0; j < dim; ++j) {
+				x1n[n * dim + j] = sqrt(1. - beta * beta) *
+					smpls[n * dim + j] +
+				       	tmpn[n * dim + j] * beta;
+			}
+			/* Determine if the new proposal is accepted */
+			alpha[n]  =  min(exp(U(dim, smpls + n * dim) -
+					 U(dim, x1n + n * dim)), 1.);
+			if (rndmUniform(seed_r + n) <= alpha[n]) {
+				copy(x1n + n * dim, smpls + n * dim, dim);
+				++accepted[n];
+//				printf("n : %d. Current accepted: %f\n",n,
+//						accepted[n]);
+//				getchar();
+			}
+		}
+	}
+	for (int n = 0; n < num_sampl; ++n) {
+		mean_accepted += accepted[n] / iter;
+	}
+	free(alpha);
+	free(accepted);
+	free(tmpn);
+	free(allzero);
+	free(x1n);
+	return mean_accepted / num_sampl * 100.;
+}
+
+double BACKUP_prll_uPcnSampler (double (*U) (int, const double*), int dim, 
+		const double *x, int num_sampl, int iter, 
+		double *smpls, double beta, const double *cov,
 	       	unsigned int *seed_r,
 		int (*okconstraint) (const double *, int))
 {
@@ -253,7 +324,6 @@ double prll_uPcnSampler (double (*U) (int, const double*), int dim,
 	free(x1n);
 	return mean_accepted / num_sampl * 100.;
 }
-
 /* if U is a dim-dimensional R^dim -> R potential function,
  * we aim at sampling the density exp(-U(x))dx via a simple random
  * walk metropolis algorithm. 

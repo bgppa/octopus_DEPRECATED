@@ -525,13 +525,14 @@ to perform a (general logistic) prediction for (at least) one month?
 
 With the idea of answering to the question above, we consider both Germany
 and Italy, the former from the 8th of April, the latter from the 1th
-(as explained in section SEC before). We then take one, two and three weeks
+(as explained in section SEC before). We consider one, two and three weeks
 of data and use them to fit the general logistic curve running until the
-18th of May. This is because both the Countries
+18th of May. This day is because both the Countries
 changed their policy at the beginning of May, then counting 
 two weeks for the incubation time, we deduce that 
 a new instance of the model (i.e. new parameters)
-will start around the mid of the month.
+will start around the mid of the month, so the old onw will still be valid
+until then.
 
 
 The fitting procedure is done my using a Bayesian algorithm
@@ -540,10 +541,7 @@ clusters producing multi dimensional histograms. We considered
 only the 99\% of the probability, eliminating so some very
 unlikely extreme value, and paid attention to
 the "worst" case scenario, i.e. the one with the highest number of deaths, 
-the "best", and the most probably one. 
-When only two curves are plotted curves,
-the most probably one coincides with the worst or the best, depending on the
-case.
+the "best", and the expectation value.
 
 
 \begin{figure}[h!]

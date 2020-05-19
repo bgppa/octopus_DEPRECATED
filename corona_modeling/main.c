@@ -231,11 +231,14 @@ int main(int argc, char **argv) {
 	/* This is the covariance of the prior probability measure */
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
 	id(cov, glob_dDom);
-	cov[0] = pow(0.2, 2.);
+	cov[0] = pow(0.1, 2.);
 	cov[glob_dDom + 1] = pow((covQ/ 2.), 2.);
 	/* In the case of Richard */
 	if (glob_dDom == 3) {
-		cov[glob_dDom * glob_dDom - 1] = pow(0.5, 2.);
+		/* when v is just between 0 and 1 */
+//		cov[glob_dDom * glob_dDom - 1] = pow(0.5, 2.);
+		/* Now we try to set it one oder lower */
+		cov[glob_dDom * glob_dDom - 1] = pow(1, 2.);
 	}
 	/* 0 < beta < 1. small = conservative; hight = explorative */
 	double beta = 0.01;
@@ -338,12 +341,15 @@ int main(int argc, char **argv) {
 	//	printf("Minimum Q: %f\n", glob_y[glob_dCod-1]);
 		printf("Q random in %f, %f\n", glob_y[glob_dCod-1], covQ);
 	        for (int i = 0; i < n_samples * glob_dDom; i += glob_dDom) {
-                	start_pt[i] = rndmUniformIn(0.01, 0.9, NULL);
+                	start_pt[i] = rndmUniformIn(0.01, 0.2, NULL);
 			start_pt[i + 1] = 
 		       	rndmUniformIn(glob_y[glob_dCod - 1], covQ, NULL);
 			/* In the Richard case */
 			if (glob_dDom == 3) {
+				/*
 			start_pt[i + 2] = rndmUniformIn(0.01, 0.9, NULL);
+			*/ /* One oder lower, using the lower cov */
+			start_pt[i + 2] = rndmUniformIn(0.01, 3., NULL);
 			}
        		}
 	//	printf("Initial error distribution\n");
@@ -355,8 +361,8 @@ int main(int argc, char **argv) {
 		avrg_acceptance_rate = 
 #if PARALLEL	/* Parallel pcn */
 	        prll_uPcnSampler(potU, glob_dDom, start_pt, n_samples,
-				n_iterations, raw_samples, beta, cov, seed_r,
-				positive);
+				n_iterations, raw_samples, beta, cov, seed_r);
+	//				positive);
 		//		allok);
 #else		/* Ordinary pcn */
 	        uPcnSampler(potU, glob_dDom, start_pt, n_samples, 
