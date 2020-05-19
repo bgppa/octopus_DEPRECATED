@@ -236,11 +236,15 @@ double prll_uPcnSampler (double (*U) (int, const double*), int dim,
 						<= log_alpha[n]) {
 				copy(x1n + n * dim, smpls + n * dim, dim);
 				++accepted[n];
+//				printf("n : %d. Current accepted: %f\n",n,
+//						accepted[n]);
+//				getchar();
 				}
 			}
 		}
-		accepted[n] /= iter;
-		mean_accepted += accepted[n];
+	}
+	for (int n = 0; n < num_sampl; ++n) {
+		mean_accepted += accepted[n] / iter;
 	}
 	free(log_alpha);
 	free(accepted);
@@ -330,6 +334,77 @@ double old_prll_uPcnSampler (double (*U) (int, const double*), int dim,
 	free(x1n);
 	return mean_accepted / num_sampl * 100.;
 }
+
+/* TO TEST, COMPLETELY EXPERIMENTAL AND POSSIBLY WRONG */
+double simple_pcn (double (*U) (int, const double*), 
+		const double *start_pt, int dim,
+		double *chain, int len,
+		double beta, const double *cov,
+		double burning_percentage,
+		int (*okconstraint) (const double *, int))
+{
+	setbuf(stdout, NULL);
+	assert(okconstraint != NULL);
+
+	/* Set the burning time */
+	int bt = len * burning_percentage;
+	printf("Burning time: %d\n", bt);
+	int iter = len + bt;
+
+	double accepted = 0;
+	double log_alpha = 0;
+	double *x0 = malloc(sizeof(double) * dim);
+	double *tmp = malloc(sizeof(double) * dim);
+	double *x1 = malloc(sizeof(double) * dim);
+	int chain_counter = 0;
+
+	copy(start_pt, x0, dim);
+	for (int k = 0; k < iter; ++k) {
+		if (k % 100 == 0) {
+			printf(".");
+		}
+		rndmDiagGauss (tmp, cov, dim, NULL);
+		/* Propose x1 as the weightes sum between that gaussian
+		 * and the previous x0, which is smpls[n*dim] */
+		for (int j = 0; j < dim; ++j) {
+			x1[j] = sqrt(1. - beta * beta) * x0[j] + tmp[j] * beta;
+		}
+		if (okconstraint(x1, dim)) {
+//			printf("Current point:\n");
+//			printVec(x0, dim);
+			/* Determine if the new proposal is accepted */
+//			printf("Proposed: \n");
+//			printVec(x1, dim);
+//			getchar();
+			log_alpha = min(U(dim, x0) - U(dim, x1), 0.);
+//			printf("log_alpha: %e\n", log_alpha);
+			if (log(rndmUniform(NULL)) <= log_alpha) {
+					copy(x1, x0, dim);
+					++accepted;
+//					printf("Accepted\n");
+//				printf("n : %d. Current accepted: %f\n",n,
+//						accepted[n]);
+//				getchar();
+			}
+		}
+		else{--k;};
+		/* If we surpassed the burning time, copy the current state
+		 * into the chain */
+		if (k > bt || k == bt) {
+			copy(x0, chain + chain_counter * dim, dim);
+			++chain_counter;
+		}
+	}
+	free(x0);
+	free(x1);
+	free(tmp);
+//	printf("Produced chain:\n");
+//	getchar();
+//	printMat(chain, len, dim);
+//	getchar();
+	return accepted * 100. / iter;
+}
+
 
 #if 0
 /* Single metropolis sampling, maybe not useful. Comment to spare space */

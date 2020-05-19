@@ -16,6 +16,13 @@ double prll_uPcnSampler (double (*U) (int, const double*), int dim,
 			unsigned int* seed_r,
 			int (*okconstraint) (const double *, int));
 
+double simple_pcn (double (*U) (int, const double*),
+                const double *start_pt, int dim,
+                double *chain, int len,
+                double beta, const double *cov,
+                double burning_percentage,
+                int (*okconstraint) (const double *, int));
+
 #if 0
 /* Single sample */
 double uMpls (double (*U) (int, const double*), int dim,

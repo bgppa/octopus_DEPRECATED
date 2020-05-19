@@ -63,13 +63,17 @@ void rndmDiagGauss (double *x, const double *diag_cov, int d,
 void rndmNdimGaussian(double *m, const double *A,
                         int d, double *res, unsigned int *, int verbose);
 
-int meanAndVar (double *values, int dim, int n, double *mean, double *var,
-		double *conf_int);
+int meanAndVar (double *values, int dim, int n, double *mean, double *var);
 
+#if 0 /* Deprecated */
 double meanAndVarG (double *values, int dim, int n, double *mean, double *var,
-			double *conf_int,
                         void (*GG) (const double *, int, double *, int),
                         int codim, double *true_x, double *y);
+#endif
+
+void meanAndVarRes (double *values, int dim, int n,
+                void (*GG) (const double *, int, double *, int),
+                int codim, double *y);
 
 
 /* ---- PART 3: Stochastic processes ---- */

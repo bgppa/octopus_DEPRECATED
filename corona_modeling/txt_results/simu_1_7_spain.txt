@@ -1,0 +1,64 @@
+spain.txt [1, 7]
+Posterior on file posteriors/1-7-spain.txt
+16384 samples each with 65536 iterations
+Ignored 0 days
+Read: 7 numbers
+Starting ODE condition: 9387.000000
+Read data: 9.387e+03 1.035e+04 1.120e+04 1.195e+04 1.264e+04 1.334e+04 1.404e+04 
+
+Diagonal of the noise covariance matrix:
+4.694e+02 5.174e+02 5.599e+02 5.974e+02 6.320e+02 6.670e+02 7.022e+02 
+
+Writing to file: posteriors/1-7-spain.txt
+Q random in 14045.000000, 225278.000000
+....................................................................................................................................................................E[parameters] = 1.341e-01 2.711e+04 -1.075e-01 
+
+Average acceptance rate: 5.74%
+List of centroids: 
+1.546e-01 1.887e+04 1.529e-01
+1.979e-02 3.582e+04 -1.810e+00
+1.887e-03 6.643e+04 -2.023e+00
+2.388e-04 9.742e+04 -1.924e+00
+-6.349e-03 1.430e+05 -1.672e+00
+-5.988e-03 1.978e+05 -1.503e+00
+-2.137e-02 2.754e+05 -1.384e+00
+-6.244e-02 -3.649e+04 -9.211e-01
+-5.222e-02 -9.377e+04 -7.231e-01
+-2.048e-02 -1.802e+05 -7.234e-01
+--- global interpolation errors ---
+E[X] : -nan
+V[X] : -nan
+MAX: 21.186417%
+MIN: 1.056423%
+--- averaged punctual interpolation errors ---
+E[X] : -nan
+V[X] : -nan
+MAX: 3.768561%
+MIN: 0.009409%
+--- punctual interpolation error ---
+MAX: 24.121402%
+MIX: 0.000000%
+----- POSTERIOR DISTRIBUTION (10 centroids) -----
+86%	1.5e-01 1.9e+04 1.5e-01
+5%	2.0e-02 3.6e+04 -1.8e+00
+3%	1.9e-03 6.6e+04 -2.0e+00
+3%	2.4e-04 9.7e+04 -1.9e+00
+2%	-6.3e-03 1.4e+05 -1.7e+00
+1%	-6.0e-03 2.0e+05 -1.5e+00
+0%	-2.1e-02 2.8e+05 -1.4e+00
+0%	-6.2e-02 -3.6e+04 -9.2e-01
+0%	-5.2e-02 -9.4e+04 -7.2e-01
+0%	-2.0e-02 -1.8e+05 -7.2e-01
+-------- RESIDUALS --------
+86	3.337967e+02	1.06%
+5	5.569010e+02	1.76%
+3	3.794670e+03	12.01%
+3	6.694244e+03	21.19%
+2	-nan	-nan%
+1	-nan	-nan%
+0	-nan	-nan%
+0	-nan	-nan%
+0	-nan	-nan%
+0	-nan	-nan%
+res_err : 1.056423%
+[16384 samples, 65536 iterations]

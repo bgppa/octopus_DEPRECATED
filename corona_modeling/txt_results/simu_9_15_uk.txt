@@ -1,0 +1,64 @@
+uk.txt [9, 15]
+Posterior on file posteriors/9-15-uk.txt
+16384 samples each with 65536 iterations
+Ignored 8 days
+Read: 7 numbers
+Starting ODE condition: 7979.000000
+Read data: 7.979e+03 8.959e+03 9.876e+03 1.061e+04 1.133e+04 1.211e+04 1.287e+04 
+
+Diagonal of the noise covariance matrix:
+3.989e+02 4.479e+02 4.938e+02 5.306e+02 5.665e+02 6.054e+02 6.435e+02 
+
+Writing to file: posteriors/9-15-uk.txt
+Q random in 12869.000000, 342451.000000
+....................................................................................................................................................................E[parameters] = 1.210e-01 3.687e+04 -2.535e-01 
+
+Average acceptance rate: 6.09%
+List of centroids: 
+1.487e-01 1.869e+04 3.158e-02
+9.483e-03 5.260e+04 -1.712e+00
+3.787e-04 1.009e+05 -1.746e+00
+-5.758e-03 1.619e+05 -1.519e+00
+-1.037e-02 2.380e+05 -1.365e+00
+-1.332e-02 3.224e+05 -1.234e+00
+-2.039e-02 4.437e+05 -1.154e+00
+-6.843e-02 -7.042e+04 -5.996e-01
+-4.761e-02 -1.617e+05 -3.781e-01
+-2.335e-02 -3.110e+05 -2.747e-01
+--- global interpolation errors ---
+E[X] : -nan
+V[X] : -nan
+MAX: 23.603390%
+MIN: 1.810358%
+--- averaged punctual interpolation errors ---
+E[X] : -nan
+V[X] : -nan
+MAX: 4.565465%
+MIN: 0.027221%
+--- punctual interpolation error ---
+MAX: 22.693185%
+MIX: 0.000000%
+----- POSTERIOR DISTRIBUTION (10 centroids) -----
+82%	1.5e-01 1.9e+04 3.2e-02
+6%	9.5e-03 5.3e+04 -1.7e+00
+5%	3.8e-04 1.0e+05 -1.7e+00
+3%	-5.8e-03 1.6e+05 -1.5e+00
+2%	-1.0e-02 2.4e+05 -1.4e+00
+1%	-1.3e-02 3.2e+05 -1.2e+00
+1%	-2.0e-02 4.4e+05 -1.2e+00
+1%	-6.8e-02 -7.0e+04 -6.0e-01
+0%	-4.8e-02 -1.6e+05 -3.8e-01
+0%	-2.3e-02 -3.1e+05 -2.7e-01
+-------- RESIDUALS --------
+82	5.781469e+02	2.05%
+6	5.103420e+02	1.81%
+5	6.653824e+03	23.60%
+3	-nan	-nan%
+2	-nan	-nan%
+1	-nan	-nan%
+1	-nan	-nan%
+1	-nan	-nan%
+0	-nan	-nan%
+0	-nan	-nan%
+res_err : 2.050885%
+[16384 samples, 65536 iterations]

@@ -244,15 +244,13 @@ void rndmNdimGaussian(double *m, const double *C, int d,
 }
 
 
-/* Simple mean and variance estimator */
-int meanAndVar (double *values, int dim, int n, double *mean, double *var,
-		double *conf_int)
+/* Simple mean and variance estimator. It takes multi-dimensional data,
+ * and compute the quantities componentwise */
+int meanAndVar (double *values, int dim, int n, double *mean, double *var)
 {
 	/* n values each array of length dim */
 	fillzero (mean, dim);
 	fillzero (var, dim);
-	if (conf_int != NULL) {
-	fillzero (conf_int, dim); }
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < dim; ++j) 
 			{ mean[j] += values[j + i * dim]; }
@@ -266,26 +264,25 @@ int meanAndVar (double *values, int dim, int n, double *mean, double *var,
 	}
 	for (int i = 0; i < dim; ++i) 
 		{ var[i] /= (double) (n - 1); }
-	if (conf_int != NULL ) {
-	for (int i = 0; i < dim; ++i) 
-		{ conf_int[i] = sqrt(pow(1.96, 2.) * var[i] / n); }
+	if(dim == 1) {
+		printf("E[X] : %f\nV[X] : %f\n", mean[0], var[0]);
 	}
 return 1;
 }
 
+
+#if 0 /* Deprecated */
+/* Added the possibility of showing mean and variance of the _error_ */
 double meanAndVarG (double *values, int dim, int n, double *mean, double *var, 
-			double *conf_int,
 			void (*GG) (const double *, int, double *, int),
 			int codim, double *true_x, double *y)
 {
         /* n values each array of length dim */
         fillzero (mean, dim);
         fillzero (var, dim);
-	if (conf_int != NULL) {
-	fillzero (conf_int, dim); }
-        for (int i = 0; i < n; ++i) {
-                for (int j = 0; j < dim; ++j)
-                        { mean[j] += values[j + i * dim]; }
+	for (int i = 0; i < n; ++i) {
+        	for (int j = 0; j < dim; ++j)
+                	{ mean[j] += values[j + i * dim]; }
         }
         for (int i = 0; i < dim; ++i)
                 { mean[i] /= (double) n; }
@@ -297,11 +294,6 @@ double meanAndVarG (double *values, int dim, int n, double *mean, double *var,
         for (int i = 0; i < dim; ++i)
                 { var[i] /= (double) (n - 1); }
 	/* Now estimate the error of the mean w.r.t. y or the true_x */
-	/* Estimate the 95% confidence interval for each mean point */
-	if (conf_int != NULL) {
-	for (int i = 0; i < dim; ++i) 
-		{ conf_int[i] = sqrt(pow(1.96, 2.) * var[i] / n); }
-	}
 	/* Compute the G errors w.r.t. the bayesian inverse problem context */	
 	double err = 0;
 	if (true_x != NULL) {
@@ -314,16 +306,88 @@ double meanAndVarG (double *values, int dim, int n, double *mean, double *var,
 		free (mean_img);
 	}
 	printf("E(X): ");
-	if (conf_int != NULL){
-	for (int i = 0; i < dim; ++i) 
-		{ printf("%e +- %e; ", mean[i], conf_int[i]); }
-	}
-	else printVec(mean, dim);
+	printVec(mean, dim);
 	printf("Var(X): ");
 	printVec (var, dim);
 //	printf("%s mean err: %.2f%%\n",true_x==NULL ? "_res_" : "_true_", err);
 	return err;
 }
+#endif
+
+/* Compute mean and average of the residual errors given a set of
+ * parameters "values", each of dimension dim */
+void meanAndVarRes (double *values, int dim, int n, 
+		void (*GG) (const double *, int, double *, int),
+		int codim, double *y)
+{
+	double *glb_err = malloc(sizeof(double) * n);
+	double *loc_err = malloc(sizeof(double) * n);
+	double *tmp_img = malloc(sizeof(double) * codim);
+	assert (tmp_img != NULL);
+	assert (glb_err != NULL);
+	assert (loc_err != NULL);
+	/* Add the other asserts */
+	double min_glb_err = 1000.;
+	double max_glb_err = 0.;
+	double min_loc_err = 1000.;
+	double max_loc_err = 0.;
+	double max_pt_err = 0.;
+	double min_pt_err = 1000.;
+	double tmp_val = 0.;
+	for (int i = 0; i < n; ++i) {
+		GG (values + i * dim, dim, tmp_img, codim);
+		/* Global error just as norm difference */
+		glb_err[i] = 
+			nrm2dist(tmp_img, y, codim) * 100. / nrm2(y, codim);
+		/* Local error as a punctual difference sum */
+		loc_err[i] = 0.;
+
+		for (int a = 0; a < codim; ++a) {
+			tmp_val = pow(tmp_img[a] - y[a], 2.) * 100. /
+			          pow(y[a], 2.);
+			if (tmp_val > max_pt_err) {
+				max_pt_err = tmp_val;
+			}
+			if (tmp_val < min_pt_err) {
+				min_pt_err = tmp_val;
+			}
+			loc_err[i] += tmp_val;
+		}
+		loc_err[i] /= (double) codim;
+		/* Registering the new maximum and lowest values */
+		if (glb_err[i] > max_glb_err) {
+			max_glb_err = glb_err[i];
+		}
+		if (glb_err[i] < min_glb_err) {
+			min_glb_err = glb_err[i];
+		}
+		if (loc_err[i] > max_loc_err) {
+			max_loc_err = loc_err[i];
+		}
+		if (loc_err[i] < min_loc_err) {
+			min_loc_err = loc_err[i];
+		}
+	}
+	double just_a_var = 10;
+	double just_a_var2 = 10;
+	printf("--- global interpolation errors ---\n");
+	meanAndVar (glb_err, 1, n, &just_a_var, &just_a_var2);
+	printf("MAX: %f%%\n", max_glb_err);
+	printf("MIN: %f%%\n", min_glb_err);
+	printf("--- averaged punctual interpolation errors ---\n");
+	meanAndVar (loc_err, 1, n, &just_a_var, &just_a_var2);
+	printf("MAX: %f%%\n", max_loc_err);
+	printf("MIN: %f%%\n", min_loc_err);
+	printf("--- punctual interpolation error ---\n");
+	printf("MAX: %f%%\n", max_pt_err);
+	printf("MIX: %f%%\n", min_pt_err);
+	free (tmp_img);
+	free (loc_err);
+	free (glb_err);
+}
+
+
+
 
 /* FROM NOW ON THERE IS NO PARALELIZATION IMPLE<EMTED */
 /* ----- PART 3: Stochastic processes ---- */
