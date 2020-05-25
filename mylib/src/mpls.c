@@ -172,7 +172,7 @@ double uPcnSampler (double (*U) (int, const double*), int dim,
 /* Pcn-Metropolis algorithm for potentials U */
 /* This NEW samplers requires the user to give start_pt as a list of 
  * starting points, x, so an array of dimension dim * num_sampl */
-double prll_uPcnSampler (double (*U) (int, const double*), int dim, 
+double prll_uPcnSampler (double (*Phi) (int, const double*), int dim, 
 		const double *x, int num_sampl, int iter, 
 		double *smpls, double beta, const double *cov,
 	       	unsigned int *seed_r)
@@ -209,8 +209,18 @@ double prll_uPcnSampler (double (*U) (int, const double*), int dim,
 		}
 		for (int i = 0; i < iter; ++i) { /* Produce a sample */
 			/* Sample the gaussian in tmp */
+#if 0
+			printf("\n\nCurrent: ");
+			printVec(smpls + n * dim, dim);
+			printf("Phi(current): %e\n", 
+					Phi(dim, smpls + n * dim)); 
+#endif
 			fillzero (tmpn + n * dim, dim);
 			rndmDiagGauss (tmpn + n * dim, cov, dim, seed_r + n);
+#if 0	
+			printf("Proposed gaussian (beta = %f) : ", beta);
+			printVec(tmpn + n, dim);
+#endif
 //			rndmNdimGaussian(allzero, cov, dim,
 //				       	tmpn + n * dim, seed_r + n, 0);
 			/* Propose x1 as the weightes sum between that gaussian
@@ -223,17 +233,27 @@ double prll_uPcnSampler (double (*U) (int, const double*), int dim,
 			/* Determine if the new proposal is accepted */
 			/* Ensure that we propose an actual number,
 			 * not a -infinity */
-			if (isinf(U(dim, x1n + n * dim)) == 0){
-				alpha[n]  =  min(exp(U(dim, smpls + n * dim) -
-					 U(dim, x1n + n * dim)), 1.);
+#if 0
+			printf("Proposed: ");
+			printVec(x1n + n, dim);
+			printf("Phi(proposed) : %e\n", 
+					Phi(dim, x1n + n * dim));
+#endif			
+			if (isfinite(Phi(dim, x1n + n * dim))){
+				alpha[n]  =  min(exp(Phi(dim, smpls + n * dim) 
+					- Phi(dim, x1n + n * dim)), 1.);
+#if 0
+				printf("alpha : %f\n", alpha[n]);
+#endif
 				if (rndmUniform(seed_r + n) <= alpha[n]) {
-					copy(x1n + n * dim, 
-							smpls + n * dim, dim);
+					copy(x1n + n * dim, smpls+n*dim,dim);
 					++accepted[n];
-//				printf("n : %d. Current accepted: %f\n",n,
-//						accepted[n]);
-//				getchar();
+#if 0		
+				printf("Accepted!\n");	
+#endif
 				}
+			} else {
+				//getchar();
 			}
 		}
 	}

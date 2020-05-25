@@ -22,60 +22,18 @@
  * then generally used in many function without altering their value */
 double *glob_y;
 double *glob_eta;
-
-
-/* Take a positive integer and return the highest power
-* of 10 capable of diving it with a result > 1.
-* Eg: 300 -> 100, 23 -> 10, 4 -> 1 */
-double ten_power (int v)
-{
-        if (v <= 0) {
-                printf("arg_err : ten_power: must be positive (%d)!\n", v);
-                return 0;
-        }
-        int i = 0;
-        while (v / pow(10, i) > 1)
-                ++i;
-        return pow(10, i-1);
-}
-
-
-/* Control function: ensures that the parameters for the Gompertz
- * model are always positive - to be given to the pcn samples */
-int positive (const double *x, int dim)
-{
-/*	if (x[0] > 0 && x[0] < 1 && x[1] > 0)
-		return 1;
-	return 0;
-	*/
-	for (int i = 0; i < glob_dDom; ++i) 
-		if (x[i] < 0)
-			return 0;
-	return 1;
-}
-/* For the exponential interpolation, no restriction on parameters */
-int allok(const double *x, int dim) {return 1;}
+double *glob_cov_diag;
+double *glob_gauss_means;
+double *glob_Am;
 
 /* Thanks to g.h, it is assumed to have access to the globals
  * glob_dDom, glob_dCod, const integer, and the function
  * G(int, const double*, int double) representing the operator
  * G:R^glob_dDom -> R^glob_dCod to invert. They authomatically imply the
- * potential's definition below: */
-double potU (int dim, const double *u)
-{
-	double *Gu = malloc(sizeof(double) * glob_dCod);
-	/* Put in Gu the value of G(u) */
-	G(u, glob_dDom, Gu, glob_dCod);
-	/* Return 0.5 * ((y - G(u) / eta)^2 */
-	/* New version, includes the possibility of a multidimensional noise.
-	 * Gu will (y - G(u) / eta)_i, vectorized form: */
-	for (int i = 0; i < glob_dCod; ++i) {
-		Gu[i] = (glob_y[i] - Gu[i]) / sqrt(glob_eta[i]);
-	}
-	double r = 0.5 * pow(nrm2(Gu, glob_dCod), 2.);
-	free(Gu);
-	return r;
-}
+ * potential's definition below: .
+ * NOTE THAT potU is defined in a way that:
+ * - log e^{-potU} = PHI, i.e. phi = potU */
+double phi (int dim, const double *u);
 
 
 /* yFromFile and randomInput initialize glob_y and glob_eta, the observation
@@ -83,106 +41,22 @@ double potU (int dim, const double *u)
  * study. yFromFiles reads a dataset formatted for the corona, while
  * randonInput generated a random x, set y = G(x), and is therefore used
  * as a possibility to check toy models' data and the algothms effectinevess*/
-int yFromFile (int ignore_n_days, const char *filename, int verbose) {
-        FILE* file = fopen(filename, "r");
-	if (file == NULL) {
-		printf ("Error: file %s not found!\n", filename);
-		return 0;
-	}
-        int count = 0;
-        double discard = 0;
-        /* Ignore n lines, each of them has two numbers */
-        for (int i = 0; i < 2 * ignore_n_days; ++i) {
-                fscanf (file, "%lf", &discard);
-        }
-        /* Start reading the dataset from the day after */
-        for (int i = 0; i < glob_dCod; ++i) {
-                /* Ignore the first digit, it's for the plot */
-                fscanf (file, "%lf", &discard);
-                if (fscanf (file, "%lf", glob_y + i)) {
-                        ++count;
-                }
-        }
-	/* Set the ODE initial condition as the first read value */
-	glob_initCond = glob_y[0];
-	if (verbose) {
-	        printf("Ignored %d days\n", ignore_n_days);
-	        printf("Read: %d numbers\n", count);
-		printf("Starting ODE condition: %f\n", glob_initCond);
-	        printf("Read data: ");
-	        printVec(glob_y, glob_dCod);
-		printf("\n");
-	}
-	/* Now set the noise accordingly to the magnitude of the generated y*/
-	for (int i = 0; i < glob_dCod; ++i) {
-		/* EXPERIMENTAL */
-		glob_eta[i] =  fabs(glob_y[i]) / 20.;
-//		glob_eta[i] = ten_power(glob_eta[i]) / 2.;
-	}
-	/* Alternative option for the noise-free cases */
-//	fillWith(0.1, glob_eta, glob_dCod);
-	if (verbose) {
-		printf("Diagonal of the noise covariance matrix:\n");
-		printVec(glob_eta, glob_dCod);
-		printf("\n");
-	}
-        fclose(file);
-	return count;
-}
+int yFromFile (int ignore_n_days, const char *filename, int verbose); 
+
 /* Store in x, array of dimension glob_dDom, a random input for G.
  * Then set glob_y = G(u), and add some noise glob_eta depending on
  * the norm of y. */
-void randomInput (double *x)
-{
-	assert(x != NULL);
-	/* Dimension of x = glob_dDom */
-	x[0] = rndmUniformIn(0.04, 1.0, NULL);
-	x[1] = rndmUniformIn(4000, 100000, NULL);
-	/* If we are in the Richard case */
-	if (glob_dDom == 3) {
-		x[2] = rndmUniformIn(0.01, 4.0, NULL);
-	}
-	printf("X:\t");
-	for (int i = 0; i < glob_dDom; ++i) {
-		printf("%e ", x[i]);
-	} printf("\n");
-	/* Random initial condition for the ODE */
-	glob_initCond = rndmUniformIn(20., 100., NULL);
-	printf("Set initial ODE condition to: %f\n", glob_initCond);
-	/* Now produce y = G(x) */
-	G(x, glob_dDom, glob_y, glob_dCod);
-	printf("G(X):\t");
-	printVec(glob_y, glob_dCod);
-	printf("\n");
-	/* Now set the noise, we propose two options: */
-	for (int i = 0; i < glob_dCod; ++i) {
-		/* According to the measure's value itself */
-		/* EXPERIMENAL */
-		glob_eta[i] = fabs(glob_y[i]);
-		//glob_eta[i] = pow(ten_power(glob_y[i]), 2.);
-		/* The noise-free case, for parameter tuning */
-//		glob_eta[i] = 0.1;
-	}
-//	printf("[noise-free]\n");
-	printf("Noise diagonal:\n");
-	printVec(glob_eta, glob_dCod);
-	/* Re-set y by addding the noise, so to have y = G(X) + eta */
-	for (int i = 0; i < glob_dCod; ++i) {
-		glob_y[i] += rndmGaussian(0., glob_eta[i], NULL) / 20.;
-//		glob_y[i] += fabs(rndmGaussian(0., glob_eta[i], NULL));
-	}
-	printf("G(X) + NOISE: ");
-	printVec(glob_y, glob_dCod);
-	printf("\n");
-	/* Alternative printing for file */
-//	for (int i = 0; i < glob_dCod; ++i) {
-//		printf("%d %.f\n", i+1, glob_y[i]);
-//	}
-//	getchar();
-}
+void randomInput (double *x);
+
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
+	/* The variable glob_dDom is declared and initialized in g.c */
+	glob_cov_diag = malloc(sizeof(double) * glob_dDom);
+	glob_gauss_means = malloc(sizeof(double) * glob_dDom);
+	fillzero(glob_gauss_means, glob_dDom);
+
+	glob_Am = malloc(sizeof(double) * glob_dDom);
 	char *name_file_posterior = malloc(sizeof(char) * 200);
 	FILE *file_posterior = NULL;
 #if TEST_MODE
@@ -194,15 +68,19 @@ int main(int argc, char **argv) {
 #if !TEST_MODE
 	int N_samples = 12;
 	int N_iter = 12;
-	double covQ = 10000;
-	if (argc == 7) {
+	double expQ = 10000;
+	/* 0 < beta < 1 */
+	double beta;
+	if (argc == 8) {
 		N_samples = atoi(argv[4]);
 		N_iter = atoi(argv[5]);
-		covQ = atof(argv[6]);
+		expQ = atof(argv[6]);
+		beta = atof(argv[7]);
 	} else {
-		printf("./main from to country.txt sampl iter covQ\n");
+		printf("./main from to country.txt sampl iter expQ beta\n");
 		return -1;
 	}
+	assert(beta <= 1 && beta >= 0);
 	int from_day = atoi(argv[1]); /* Minimum is day 1 */
 	int to_day = atoi(argv[2]);
 	glob_dCod = to_day - from_day + 1;
@@ -229,19 +107,12 @@ int main(int argc, char **argv) {
 	int centroids = 10;
 	/* Covariance matrix for the Gaussian walk during the chain */
 	/* This is the covariance of the prior probability measure */
+	/* For the moment we assume it to be diagonal, but we keep
+	 * its matrix form for future compatibility. */
 	double *cov = malloc(sizeof(double) * glob_dDom * glob_dDom);
+	/* The covariance matrix will be initialized later */
 	id(cov, glob_dDom);
-	cov[0] = pow(0.1, 2.);
-	cov[glob_dDom + 1] = pow((covQ/ 2.), 2.);
-	/* In the case of Richard */
-	if (glob_dDom == 3) {
-		/* when v is just between 0 and 1 */
-//		cov[glob_dDom * glob_dDom - 1] = pow(0.5, 2.);
-		/* Now we try to set it one oder lower */
-		cov[glob_dDom * glob_dDom - 1] = pow(1, 2.);
-	}
-	/* 0 < beta < 1. small = conservative; hight = explorative */
-	double beta = 0.01;
+/*	0 < beta < 1. small = conservative; hight = explorative */
 	int tot_test = 1;
 
 
@@ -319,6 +190,38 @@ int main(int argc, char **argv) {
 	/* THE RECONSTRUCTION PROCESS STARTS NOW! */
 	/* Run a serie of multiple test on the SAME DATA
 	 * This is CRUCIAL to check if there is convergence in probability */
+
+	/* Set the mean and covariance prior */
+	/* Initialize the gaussian means MANUALLY */
+//	glob_gauss_means[0] = 0.1;
+//	glob_gauss_means[1] = glob_y[glob_dDom-1] + 
+//		(expQ - glob_y[glob_dDom-1]) / 2.;
+//	glob_gauss_means[2] = 1;
+
+	/* Initialize the covariance matrix */
+//	cov[0] = pow(0.02, 2.);
+//	cov[4] = pow((expQ - glob_y[glob_dDom-1]) / 4., 2.);
+//	cov[8] = pow(0.3, 2.);
+	cov[0] = pow(0.05, 2);
+	cov[4] = pow(expQ / 2., 2.);
+	cov[8] = pow(0.5, 2.);
+
+	/* Compute the product C^-1 * m, crucial for the true pCN
+	 * potential in the case of non centered Gaussian */
+	/* NOW YOU DO NOT USE THAT FUNCTION, TO BE CORRECTED */ 
+	for (int i = 0; i < glob_dDom; ++i) {
+		glob_cov_diag[i] = 1. / cov[glob_dDom * i + i];
+		glob_Am[i] = glob_cov_diag[i] * glob_gauss_means[i];
+	}
+//	printf("Diagonal of A: \n");
+//	printVec(glob_cov_diag, glob_dDom);
+//	printf("Multiplied by mean: \n");
+//	printVec(glob_gauss_means, glob_dDom);
+	printf("beta : %f\n", beta);
+	printf("expQ: %f\n", expQ);
+	printf("Let's start!\n");
+	getchar();
+
 	for (int a = 0; a < tot_test; ++a) {
 		setbuf(stdout, NULL);
 		/* Reset the contenitive variables */
@@ -339,17 +242,17 @@ int main(int argc, char **argv) {
 	/* Determine how the chain starting points are chosen */
 		fillzero(start_pt, glob_dDom * n_samples);
 	//	printf("Minimum Q: %f\n", glob_y[glob_dCod-1]);
-		printf("Q random in %f, %f\n", glob_y[glob_dCod-1], covQ);
+		printf("Q random in %f, %f\n", glob_y[glob_dCod-1], expQ);
 	        for (int i = 0; i < n_samples * glob_dDom; i += glob_dDom) {
-                	start_pt[i] = rndmUniformIn(0.01, 0.2, NULL);
+                	start_pt[i] = rndmUniformIn(0.01, 0.1, NULL);
 			start_pt[i + 1] = 
-		       	rndmUniformIn(glob_y[glob_dCod - 1], covQ, NULL);
+		       	rndmUniformIn(glob_y[glob_dCod - 1], expQ, NULL);
 			/* In the Richard case */
 			if (glob_dDom == 3) {
 				/*
 			start_pt[i + 2] = rndmUniformIn(0.01, 0.9, NULL);
 			*/ /* One oder lower, using the lower cov */
-			start_pt[i + 2] = rndmUniformIn(0.01, 3., NULL);
+			start_pt[i + 2] = rndmUniformIn(0.01, 1., NULL);
 			}
        		}
 	//	printf("Initial error distribution\n");
@@ -360,12 +263,12 @@ int main(int argc, char **argv) {
 		/* Starting points...DONE. Perform MCMC */
 		avrg_acceptance_rate = 
 #if PARALLEL	/* Parallel pcn */
-	        prll_uPcnSampler(potU, glob_dDom, start_pt, n_samples,
+	        prll_uPcnSampler(phi, glob_dDom, start_pt, n_samples,
 				n_iterations, raw_samples, beta, cov, seed_r);
 	//				positive);
 		//		allok);
 #else		/* Ordinary pcn */
-	        uPcnSampler(potU, glob_dDom, start_pt, n_samples, 
+	        uPcnSampler(phi, glob_dDom, start_pt, n_samples, 
 			n_iterations, raw_samples, beta, cov, 
 		//		allok, 1);
 				positive, 1);
@@ -445,6 +348,125 @@ int main(int argc, char **argv) {
 #else
 	free(filename);
 #endif
+	free(glob_cov_diag);
+	free(glob_gauss_means);
+	free(glob_Am);
 	printf("[%d samples, %d iterations]\n", n_samples, n_iterations);
 	return 0;
+}
+
+double phi (int dim, const double *u)
+{
+	double *Gu = malloc(sizeof(double) * glob_dCod);
+	/* Put in Gu the value of G(u) */
+	G(u, glob_dDom, Gu, glob_dCod);
+	/* Return 0.5 * ((y - G(u) / eta)^2 */
+	/* New version, includes the possibility of a multidimensional noise.
+	 * Gu will (y - G(u) / eta)_i, vectorized form: */
+	for (int i = 0; i < glob_dCod; ++i) {
+		Gu[i] = (glob_y[i] - Gu[i]) / sqrt(glob_eta[i]);
+	}
+	double r = 0.5 * pow(nrm2(Gu, glob_dCod), 2.);
+
+	/* Add now the perturbation coming from the non-centered variable */
+//	r += dot(u, glob_Am, glob_dDom);
+//	r -= 0.5 * dot(glob_gauss_means, glob_Am, glob_dDom); 
+	free(Gu);
+	return r;
+}
+
+int yFromFile (int ignore_n_days, const char *filename, int verbose) {
+        FILE* file = fopen(filename, "r");
+	if (file == NULL) {
+		printf ("Error: file %s not found!\n", filename);
+		return 0;
+	}
+        int count = 0;
+        double discard = 0;
+        /* Ignore n lines, each of them has two numbers */
+        for (int i = 0; i < 2 * ignore_n_days; ++i) {
+                fscanf (file, "%lf", &discard);
+        }
+        /* Start reading the dataset from the day after */
+        for (int i = 0; i < glob_dCod; ++i) {
+                /* Ignore the first digit, it's for the plot */
+                fscanf (file, "%lf", &discard);
+                if (fscanf (file, "%lf", glob_y + i)) {
+                        ++count;
+                }
+        }
+	/* Set the ODE initial condition as the first read value */
+	glob_initCond = glob_y[0];
+	if (verbose) {
+	        printf("Ignored %d days\n", ignore_n_days);
+	        printf("Read: %d numbers\n", count);
+		printf("Starting ODE condition: %f\n", glob_initCond);
+	        printf("Read data: ");
+	        printVec(glob_y, glob_dCod);
+		printf("\n");
+	}
+	/* Now set the noise accordingly to the magnitude of the generated y*/
+	for (int i = 0; i < glob_dCod; ++i) {
+		/* EXPERIMENTAL */
+		glob_eta[i] =  fabs(glob_y[i]) / 20.;
+//		glob_eta[i] = ten_power(glob_eta[i]) / 2.;
+	}
+	/* Alternative option for the noise-free cases */
+//	fillWith(0.1, glob_eta, glob_dCod);
+	if (verbose) {
+		printf("Diagonal of the noise covariance matrix:\n");
+		printVec(glob_eta, glob_dCod);
+		printf("\n");
+	}
+        fclose(file);
+	return count;
+}
+
+void randomInput (double *x)
+{
+	assert(x != NULL);
+	/* Dimension of x = glob_dDom */
+	x[0] = rndmUniformIn(0.04, 1.0, NULL);
+	x[1] = rndmUniformIn(4000, 100000, NULL);
+	/* If we are in the Richard case */
+	if (glob_dDom == 3) {
+		x[2] = rndmUniformIn(0.01, 4.0, NULL);
+	}
+	printf("X:\t");
+	for (int i = 0; i < glob_dDom; ++i) {
+		printf("%e ", x[i]);
+	} printf("\n");
+	/* Random initial condition for the ODE */
+	glob_initCond = rndmUniformIn(20., 100., NULL);
+	printf("Set initial ODE condition to: %f\n", glob_initCond);
+	/* Now produce y = G(x) */
+	G(x, glob_dDom, glob_y, glob_dCod);
+	printf("G(X):\t");
+	printVec(glob_y, glob_dCod);
+	printf("\n");
+	/* Now set the noise, we propose two options: */
+	for (int i = 0; i < glob_dCod; ++i) {
+		/* According to the measure's value itself */
+		/* EXPERIMENAL */
+		glob_eta[i] = fabs(glob_y[i]);
+		//glob_eta[i] = pow(ten_power(glob_y[i]), 2.);
+		/* The noise-free case, for parameter tuning */
+//		glob_eta[i] = 0.1;
+	}
+//	printf("[noise-free]\n");
+	printf("Noise diagonal:\n");
+	printVec(glob_eta, glob_dCod);
+	/* Re-set y by addding the noise, so to have y = G(X) + eta */
+	for (int i = 0; i < glob_dCod; ++i) {
+		glob_y[i] += rndmGaussian(0., glob_eta[i], NULL) / 20.;
+//		glob_y[i] += fabs(rndmGaussian(0., glob_eta[i], NULL));
+	}
+	printf("G(X) + NOISE: ");
+	printVec(glob_y, glob_dCod);
+	printf("\n");
+	/* Alternative printing for file */
+//	for (int i = 0; i < glob_dCod; ++i) {
+//		printf("%d %.f\n", i+1, glob_y[i]);
+//	}
+//	getchar();
 }
