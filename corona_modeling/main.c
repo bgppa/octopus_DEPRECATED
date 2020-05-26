@@ -36,6 +36,17 @@ double *glob_Am;
 double phi (int dim, const double *u);
 
 
+int allok(const double *v, int a) {
+return 1;
+}
+
+int positive (const double *v, int a) {
+        for (int i = 0; i < a; ++i) {
+                if(v[i] < 0) return 0;
+        }
+        return 1;
+}
+
 /* yFromFile and randomInput initialize glob_y and glob_eta, the observation
  * from where to reconstruct and the noise, depending on the case under
  * study. yFromFiles reads a dataset formatted for the corona, while
@@ -264,9 +275,9 @@ int main(int argc, char **argv) {
 		avrg_acceptance_rate = 
 #if PARALLEL	/* Parallel pcn */
 	        prll_uPcnSampler(phi, glob_dDom, start_pt, n_samples,
-				n_iterations, raw_samples, beta, cov, seed_r);
-	//				positive);
-		//		allok);
+				n_iterations, raw_samples, beta, cov,
+					positive, seed_r);
+                                        //allok, seed_r);
 #else		/* Ordinary pcn */
 	        uPcnSampler(phi, glob_dDom, start_pt, n_samples, 
 			n_iterations, raw_samples, beta, cov, 

@@ -175,6 +175,7 @@ double uPcnSampler (double (*U) (int, const double*), int dim,
 double prll_uPcnSampler (double (*Phi) (int, const double*), int dim, 
 		const double *x, int num_sampl, int iter, 
 		double *smpls, double beta, const double *cov,
+                int (*okconstraint) (const double *, int),
 	       	unsigned int *seed_r)
 {
 	setbuf(stdout, NULL);
@@ -239,7 +240,8 @@ double prll_uPcnSampler (double (*Phi) (int, const double*), int dim,
 			printf("Phi(proposed) : %e\n", 
 					Phi(dim, x1n + n * dim));
 #endif			
-			if (isfinite(Phi(dim, x1n + n * dim))){
+			if (isfinite(Phi(dim, x1n + n * dim)) &&
+                                okconstraint(x1n + n * dim, dim)){
 				alpha[n]  =  min(exp(Phi(dim, smpls + n * dim) 
 					- Phi(dim, x1n + n * dim)), 1.);
 #if 0
