@@ -304,6 +304,7 @@ so that everytime that we start from a point $x_0$,
 the chain produces a sample
 $x_N$. The value for $N$ must
 be chosen in a way to overtake the known \emph{burning time} issue.
+We always set it to be $2^15 > 130000$.
 
 
 Repeating multiple times the algorithm with \emph{different} starting points
@@ -311,10 +312,13 @@ $x_0$,
 we collect large amounts of samples, call this number $S$,
 where the \emph{correlation} between them, a typical issue when
 when using a single traditional Markov Chain,
-is hopefully well mitigated.
+is hopefully well mitigated. Again, in practice we set this value
+as $2^15$, too.
 
 
-ADD THE VALUES FOR N, S, BETA.
+Concerning the conservative parameter $\beta$, it was usually tuned around
+$0.001$ or comparable values, chosen in order to produce a chain with
+an acceptance rate around $25\%$.
 
 
 We still have to comment about the choice for the prior $\rho(dx)$ and
@@ -373,7 +377,7 @@ importance of keeping
 a curve described by an autonomous ODE.
 
 
-Since in all the Countries the available data start around the mid
+Since the data in all Countries start around the mid
 of February, one might be tempted to use the \emph{entire}
 collection (until, e.g. the $10$th of April)
 relying on the intuition "more data, more accuracy".
@@ -381,11 +385,11 @@ relying on the intuition "more data, more accuracy".
 
 As a first intuitive remark,
 recall that the general logistic model is connected to the simple
-logistic map ($v = 1$). For the latter, it can be shown that,
+logistic map ($v = 1$). For the latter one can show that,
 when used to model the number of infected,
-it can be reformulated as a $SIS$ compartmental model
-where $q$ can also be connected to the average number of people's
-daily contacts.
+the map can be reformulated as a $SIS$ compartmental model
+where $q$ is also connected to the average number of people's
+daily social contacts.
 But since lockdown measures have been adopted, this quantity
 strongly changed in time. As a consequence of that, although
 we have no 100\% rigorous justification,
@@ -399,8 +403,8 @@ are given in their sections.
 When following this logic, three cases can happen:
 \begin{itemize}
 	\item[1] the "true" process is actually a general logistic one,
-		but it already started before we began collecting data;
-	\item[2] same as above, but the ODE still have
+		but it already started \emph{before} we began collecting data;
+	\item[2] same as above, but the ODE \emph{still} have
 		to start, implying that part of the
 		initial data that we read belongs to
 		another model/trajectory;
@@ -423,13 +427,16 @@ no matter if we start observing a value, say $V_n$, at
 day $n$, or $V_{n+1}$ at day $n+1$: 
 the trajectory produced from day $n+1$ (with initial
 conditions $V_{n+1}$) is precisely the same as the one
-produced by beginning at day $n$ with initial condition $V_n$.
-Therefore \emph{they are ruled by the same values of $P$},
-so that they infere the same parameter (i.e. one can safely
+produced by beginning at day $n$ (with initial condition $V_n$).
+The two trajectories \emph{are ruled by the same values of $P$},
+therefore they infere the same parameter $P$ (i.e. one can safely
 start the observations from the day $n+1$).
 Of course, one should not abuse this fact:
 the more are the observed data belonging the \emph{same}
 trajectory, the better the estimation works.
+In other words, if one is sure that the ODE started at day $n$,
+one should take it as starting day and not $n+1$, in order to
+improve the estimator's performance.
 
 
 \subsection{Choosing the prior distribution}
@@ -440,9 +447,18 @@ It might represent
 a strong limitation, especially if we consider the fact
 that all the parameters in the general logistic equation
 are supposed to be positive. In order to cincumvent this problem,
-we tried with a very straightforward approach (which worked).
+we tried with a very straightforward approach (which worked):
+we started the chain always with positive values,
+and when negative are proposed, we discard them.
 
 
+Consequently we are technically not considering the full posterior
+distribution, but just its part with posisitive values.
+Altoight we still have to prove that there are no theoretical
+pitfalls, this naive approach seem to work reasonabily well.
+
+
+\begin{comment}
 We did not \emph{impose}
 any limitation on the parameter's domain: the chains
 were free to explore negative values, too (until the proposals
@@ -455,12 +471,14 @@ such results as an interesting emerging property.
 
 
 TO DO: STUDYING ANALYTICALLY WHAT HAPPENS WITH NEGATIVE V
+\end{comment}
 
 
-We explain now in detail the choice for the prior and the starting points.
+Dealing with the precise structure of the prior distribution and the
+chain's starting points, everything is clarified in the following lines.
 Remember that the role of $\rho$
 is to represent the expected range of the searched values.
-For simplicity we \emph{assume} the covariance form:
+For simplicity we define it with an easy covariance form:
 \begin{equation}
 \begin{pmatrix}
 	\sigma_q^2 & 0 & 0 \\
@@ -472,16 +490,19 @@ splitting so the prior into three independent one dimensional Gaussians for
 every parameters. Recall that if $X \sim N(0,\sigma^2)$, the classical
 quantile property claims 
 $\mathbb{P}[-2 \sigma \leq X \leq 2 \sigma] \geq 0.95$.
-From the first section we recall how we prefer having $v \in [0,1]$, so by
-using the quantile formula above we suggest a value $\sigma_v = 0.5$.
+In the first section we recall how we prefer having $v \in [0,1]$, so by
+using the formula above we suggest $\sigma_v = 0.5$.
 
-We remind that $q$ is connected to the starting exponential growth, while $Q$ 
+We remind that $q$ is connected to the simple logistic's
+ starting exponential growth, while $Q$ 
 relates to the maximum number of possible cases. 
 Our idea is simple: as a first move,
-do a rough exponential interpolation on the given dataset. 
+we do a rough exponential interpolation on the given dataset. 
 Since we always obtained very small exponential powers,
-we use this knowledge to set  $\sigma_q = 0.2$.
-Furthermore, the exponential law gives a "rough and ignorant"
+we use this knowledge to set  $\sigma_q = 0.05$
+(altought we are using a general logistic map, and not just the
+simple logistic model).
+Furthermore, the exponential law gives a rough
 prediction about the number of the deaths around, say, the $20th$ of May
 (i.e. one Month after the datasets); call it $N_e$.
 We set $\sigma_Q = \frac{N_e}{2}$, in order to represent the idea
@@ -499,34 +520,51 @@ $[0, 1] \times [D, N_e] \times [0,1]$ coherently which the explanation above.
 
 
 \section{Numerical results}
-Let's suppose to be in
-a situation with stable conditions capable of avoiding an exponential
-explosion of the disease. For instance, this is the case for the recent
-lockdown in Europe.
-We aim to answer to the following question:
-for how many days do we need to collect data before being able 
-to perform a (general logistic) prediction for (at least) one month?
+We took into account multiple European Countries with the idea of
+answering to the following question:
+supposing to be in a stable situation capable of avoiding
+an exponential explosion of the infection, how many weeks of data do we need
+before being able to perform realiable predictions concerning the
+number of deceased people?
+More precisely, for how many days do last the analysis done by using
+$n$ weeks of data?
 
 
-With the idea of answering to the question above, we consider both Germany
-and Italy, the former from the 8th of April, the latter from the 1th
-(as explained in section SEC before). We consider one, two and three weeks
-of data and use them to fit the general logistic curve running until the
-18th of May. This day is because both the Countries
-changed their policy at the beginning of May, then counting 
-two weeks for the incubation time, we deduce that 
-a new instance of the model (i.e. new parameters)
-will start around the mid of the month, so the old onw will still be valid
-until then.
+For each Country, we looked for the day when the lockdown measures
+came into play, waited around 15 days (incubation time, so to nullify
+the influence of the previous conditions), then we did predictions 
+using 1, 2 and 3 weeks of data. They are generally done by using 
+the days belonging to the first half of April, with the idea of lasting
+at least until the mid of May. Then all the Countries changed their
+policy. Therefore the idea is: if we manage to succed in predicting
+what happened in May by using the data in April, we can repat the same
+strategy concerning the month of June. 
 
 
-The fitting procedure is done my using a Bayesian algorithm
-producing so a probability measure for the parameters: we split it in
-clusters producing multi dimensional histograms. We considered
-only the 99\% of the probability, eliminating so some very
-unlikely extreme value, and paid attention to
+For each Country there is a dedicated section.
+Recall that the fitting procedure is done my using a Bayesian algorithm,
+producing so a probability measure for the parameters. We split it in
+clusters producing multi dimensional histograms, and considered
+only the 95\% of its mass, eliminating so the very
+unlikely extreme value. We paid attention to
 the "worst" case scenario, i.e. the one with the highest number of deaths, 
-the "best", and the expectation value.
+the "best", and, when possible, the expectation value.
+
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../simulations/it/1-7/1-7.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+    \includegraphics[width=\linewidth]{../simulations/it/1-14/1-14.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../simulations/it/1-21/1-21.pdf}
+  \end{subfigure}
+	\caption{Italy - Lockdown measures were declared on the 15th of March.
+                We started gathering the data from the 1st of April.}
+\end{figure}
 
 
 \begin{figure}[h!]
@@ -540,22 +578,10 @@ the "best", and the expectation value.
   \begin{subfigure}[b]{0.45\linewidth}
   \includegraphics[width=\linewidth]{../simulations/de/8-28/8-28.pdf}
   \end{subfigure}
-	\caption{Germany - to write}
+	\caption{Germany -}
 \end{figure}
 
-\begin{figure}[h!]
-  \centering
-  \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/it/1-7/1-7.pdf}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.45\linewidth}
-    \includegraphics[width=\linewidth]{../simulations/it/1-14/1-14.pdf}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/it/1-21/1-21.pdf}
-  \end{subfigure}
-	\caption{Italy - to write}
-\end{figure}
+
 
 \begin{figure}[h!]
   \centering
@@ -600,10 +626,5 @@ the "best", and the expectation value.
   \end{subfigure}
 	\caption{UK - to write}
 \end{figure}
-For the case of Germany, the (mild) lockdown stated on the $22$nd of March.
-By counting around $14$ days of delays due to the virus incubation period,
-we are on the $5th$ of April. We prefer add $3$ days of delay in order
-to clean possible uncertainty, therefore we start studying the German
-case from the $8$th of April.
 
 \end{document}

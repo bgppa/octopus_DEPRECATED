@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
 	//	printf("Minimum Q: %f\n", glob_y[glob_dCod-1]);
 		printf("Q random in %f, %f\n", glob_y[glob_dCod-1], expQ);
 	        for (int i = 0; i < n_samples * glob_dDom; i += glob_dDom) {
-                	start_pt[i] = rndmUniformIn(0.01, 0.1, NULL);
+                	start_pt[i] = rndmUniformIn(0.01, 1., NULL);
 			start_pt[i + 1] = 
 		       	rndmUniformIn(glob_y[glob_dCod - 1], expQ, NULL);
 			/* In the Richard case */
