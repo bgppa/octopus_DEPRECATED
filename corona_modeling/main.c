@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
 				/*
 			start_pt[i + 2] = rndmUniformIn(0.01, 0.9, NULL);
 			*/ /* One oder lower, using the lower cov */
-			start_pt[i + 2] = rndmUniformIn(0.01, 1., NULL);
+			start_pt[i + 2] = rndmUniformIn(0.01, 0.1, NULL);
 			}
        		}
 	//	printf("Initial error distribution\n");
