@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
 				/*
 			start_pt[i + 2] = rndmUniformIn(0.01, 0.9, NULL);
 			*/ /* One oder lower, using the lower cov */
-			start_pt[i + 2] = rndmUniformIn(0.01, 0.1, NULL);
+			start_pt[i + 2] = rndmUniformIn(0.01, 1, NULL);
 			}
        		}
 	//	printf("Initial error distribution\n");
@@ -344,6 +344,8 @@ int main(int argc, char **argv) {
 #if TEST_MODE
 	printf("%d OK out of %d\n", success, tot_test);
 #endif
+		printf("\nAverage acceptance rate: %.2f%%\n", 
+				avrg_acceptance_rate);
 	free(seed_r);
 	free(glob_y);
 	free(glob_eta);
