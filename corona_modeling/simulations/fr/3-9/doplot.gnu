@@ -4,7 +4,7 @@ echo "
 set title 'France: prediction until 18.05 using 1 week of data.' font ',11'
 set xlabel 'days [3 < April < 30]'
 set ylabel 'deceased people'
-set ytic 20000
+set ytic 100000
 set xtic 4
 set grid
 set xrange[3:48]
