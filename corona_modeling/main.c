@@ -421,8 +421,18 @@ int yFromFile (int ignore_n_days, const char *filename, int verbose) {
 	/* Now set the noise accordingly to the magnitude of the generated y*/
 	for (int i = 0; i < glob_dCod; ++i) {
 		/* EXPERIMENTAL */
-		glob_eta[i] =  fabs(glob_y[i]) / 20.;
-//		glob_eta[i] = ten_power(glob_eta[i]) / 2.;
+                /* Error of 10 % */
+		//glob_eta[i] =  fabs(glob_y[i]) / 20.;
+                /* Error of 25 % */
+               // glob_eta[i] = fabs(glob_y[i]) / 8.;
+                /* Error of 50% */
+                //glob_eta[i] = fabs(glob_y[i]) / 4.;
+                /* Error of 100% */
+               // glob_eta[i] = fabs(glob_y[i]) / 2.;
+                /* Error of 200% */
+                //glob_eta[i] = fabs(glob_y[i]);
+                /* Error of 150% */
+                glob_eta[i] = fabs(glob_y[i]) / 1.5;
 	}
 	/* Alternative option for the noise-free cases */
 //	fillWith(0.1, glob_eta, glob_dCod);
