@@ -428,11 +428,11 @@ int yFromFile (int ignore_n_days, const char *filename, int verbose) {
                 /* Error of 50% */
                 //glob_eta[i] = fabs(glob_y[i]) / 4.;
                 /* Error of 100% */
-               // glob_eta[i] = fabs(glob_y[i]) / 2.;
+                glob_eta[i] = fabs(glob_y[i]) / 2.;
                 /* Error of 200% */
                 //glob_eta[i] = fabs(glob_y[i]);
                 /* Error of 150% */
-                glob_eta[i] = fabs(glob_y[i]) / 1.5;
+               // glob_eta[i] = fabs(glob_y[i]) / 1.5;
 	}
 	/* Alternative option for the noise-free cases */
 //	fillWith(0.1, glob_eta, glob_dCod);

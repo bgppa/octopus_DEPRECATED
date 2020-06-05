@@ -35,21 +35,24 @@ MCMC method on the available data,
 we establish what are the various possibilities
 for the  
 values of $P$. Finally, by using the just learned values,
-running the model with them gives the various possibilities
+inserting them into model gives the various possibilities
 for the number of victims in the upcoming future.
 
 
-Concretely speaking, we work with the most afflicted European Countries
-(Italy, Spain, Germany, France, UK). Our final
-goal is to answer to the following question:
+Concretely speaking, we work with threeEuropean Countries
+(Italy, Germany, France) and our final
+goal is to answer to the question:
 under the assumptions above,
 \textbf{
 how many $n$ weeks of data do we need if we want to produce a prediction 
 lasting for (at least) the next $m$ weeks}?
 
 
-We conclude by showing encouraging numerical results, suggesting that
-the chosen way might be good, but there are still possibilities of improvement.
+We conclude remarking the importance of measurements errors,
+showing how they are possibly much lower for the case of Italy.
+Our results suggest that the predictions done by using the first
+three weeks of April are surprisingly still valid today,
+the 1st of June.
 
 \section {The generalized logistic model}
 We choose to model the number of deaths in time with a
@@ -80,7 +83,7 @@ with closed form solution:
 	X(t) = \frac{Q} { (1 + A \exp[-q t])^{\frac{1}{v}}}
 \end{equation}
 
-for three (in theory) \emph{stricly positivive} real parameters, 
+for three \emph{stricly positivive} real parameters, 
 $P = \{ q, Q, v\}$ and initial time zero condition $X_0$
 (we write $X(t) = X^P(t) = X^P_{X_0}(t)$ to stress this dependence).
 The letter $A$ abbreviates 
@@ -142,15 +145,20 @@ Gaussian structure above. In principle, many other possibilities
 can be chosen.
 In practice, the choice above is pretty standard and 
 seems to work reasonabily well.
-We consider the measurements
-to be "reliable up to a $10\%$ of error", in the sense that
+In our numerical simulations we take into account two
+possible degree of trustness. In the \emph{reliable}
+case we consider the measurements
+to carry "up to a $10\%$ of error", in the sense that
 the "true" value at time $i$ is supposed to be likely in the interval
-$y_i \pm \frac{y_i}{10}$.
+$y_i \pm \frac{y_i}{10}$. In the \emph{unreliable}
+case, we increase such a value to around $130\%$.
 Recalling that
 $\eta_i \sim N(0, \sigma_i^2) \implies 
 \mathbb{P}[ - 2 \sigma_i \leq \eta_i \leq 2 \sigma_i] \geq 95\%$, choosing
 then the standard deviation
-$\sigma_i \doteq \frac{y_i}{20}$ gives an error on $y_i$ as desired.
+$\sigma_i \doteq \frac{y_i}{20}$ gives the $10\%$ error
+tolerance on $y_i$, while choosing $\sigma_i = \frac{y_i}{1.5}$
+
 
 
 Intuitively speaking, fitting the model means to estimate
@@ -230,10 +238,10 @@ estimating the parameter $\mathbb{P} \in \mathbb{R}^3$, to the task
 of sampling from the \emph{posterior} probability $\mu$ on $\mathbb{R}^3$.
 Its statistical properties convey the information that we need:
 for instance, the mode can be read like "the most probably
-choice for $P$", its variance can suggest how the uncertainty
-is spread, and so on.
+choice for $P$", its variance suggests how the uncertainty
+is spread, and similarly for other quantities.
 In principle one can analyze the posterior analytically,
-since it is explicitely given by formula NUMBER.
+being explicitely given by formula NUMBER.
 But usually it is too hard to be done with pen and paper.
 Our answer it to use numerical tools: first we
 produce a large amount of samples, then we analyze them
@@ -255,9 +263,9 @@ only limited daily available data.
 
 Therefore there is no solid a priori justification for this specific 
 Monte Carlo strategy, and one is free to choose another sampling method.
-We plan to test and study the various performances, but in another work:
+We plan to test and study their various performances, but not now:
 since the final results here are reasonabily fine, we decided
-to keep the algorithm for now, leaving potential room for improvement.
+to keep this algorithm and leaving potential room for future improvement.
 
 
 The reader is invited in consulting REF for a general exhaustive description
@@ -298,36 +306,34 @@ $\{ x_i \} _{i \in \mathbb{N} }$ as follows:
 \end{enumerate}
 
 To avoid overflow problems, it is suggested to work with
-logatithms in the acceptance formula. Define
+logarithms in the acceptance formula. Define
 $N$ to be the integer at which we (always) stop the chain,
 so that everytime that we start from a point $x_0$,
 the chain produces a sample
 $x_N$. The value for $N$ must
 be chosen in a way to overtake the known \emph{burning time} issue.
-We always set it to be $2^15 > 130000$.
+We always set it to be $2^{17} > 130000$.
 
 
 Repeating multiple times the algorithm with \emph{different} starting points
 $x_0$,
-we collect large amounts of samples, call this number $S$,
-where the \emph{correlation} between them, a typical issue when
+we collect large amounts of samples, $2^{18} > 250000$ in our simulations.
+The \emph{correlation} between them, a typical issue when
 when using a single traditional Markov Chain,
-is hopefully well mitigated. Again, in practice we set this value
-as $2^15$, too.
+is therefore hopefully mitigated.
+Not how every chain istance can be executed independently,
+therefore the total sampling prodecure 
+is suitable to parallelization
+(the user must be warned about the use of a proper seed).
 
 
-Concerning the conservative parameter $\beta$, it was usually tuned around
-$0.001$ or comparable values, chosen in order to produce a chain with
+Concerning the conservative parameter $\beta$, it was usually tuned between
+$0.01$ and $0.001$, chosen in order to produce a chain with
 an acceptance rate around $25\%$.
 
 
-We still have to comment about the choice for the prior $\rho(dx)$ and
-the starting points $x_0$. Tt will be done in a section later.
-
-We finally highlight how every chain istance
-is independent, therefore the complete sampling prodecure 
-is suitable to parallelization
-(the user must be warned about the use of a proper seed).
+Finally, we still have to comment the prior $\rho(dx)$ and
+the starting points $x_0$, but this will be done in a section later.
 
 
 \begin{comment}
@@ -363,7 +369,7 @@ We apply the previous theory in order to formulate hypothesis
 for multiple European Countries concerning the future number of
 deceased people. We firstly use part of the available data at the beginning
 of April to predict the behavior until the mid of May (now known),
-verify them, and then
+with the intention of verifying them, and then
 repeating the same methodology for the month of June.
 As we briefly said in the introduction, different number of weeks
 are taken as input data, in order to observe their predictions' strenght.
@@ -396,15 +402,11 @@ we have no 100\% rigorous justification,
 we prefer \textbf{not} to trust the entire available dataset, but rather
 limiting the observations on time period with
 \emph{constant} (stronger or weaker) lockdown measures.
-Data for each Countries
-are given in their sections.
-
-
 When following this logic, three cases can happen:
 \begin{itemize}
 	\item[1] the "true" process is actually a general logistic one,
 		but it already started \emph{before} we began collecting data;
-	\item[2] same as above, but the ODE \emph{still} have
+	\item[2] same as above, but the ODE \emph{still} has
 		to start, implying that part of the
 		initial data that we read belongs to
 		another model/trajectory;
@@ -433,7 +435,7 @@ therefore they infere the same parameter $P$ (i.e. one can safely
 start the observations from the day $n+1$).
 Of course, one should not abuse this fact:
 the more are the observed data belonging the \emph{same}
-trajectory, the better the estimation works.
+trajectory, the better the estimation algorithms generally work.
 In other words, if one is sure that the ODE started at day $n$,
 one should take it as starting day and not $n+1$, in order to
 improve the estimator's performance.
@@ -441,41 +443,25 @@ improve the estimator's performance.
 
 \subsection{Choosing the prior distribution}
 The goal of this section is to explain in which way we chosen the
-prior probability measure $\rho(dx)$.
+prior probability measure $\rho(dx)$ for $\mathcal{P} = \{q, Q, v\}$.
 Since we used the pCN MCMC, it is required to be a centered Gaussian. 
 It might represent
 a strong limitation, especially if we consider the fact
 that all the parameters in the general logistic equation
 are supposed to be positive. In order to cincumvent this problem,
-we tried with a very straightforward approach (which worked):
+we tried with a very straightforward approach (and it worked):
 we started the chain always with positive values,
-and when negative are proposed, we discard them.
+and when negative are proposed, we simply discarded them.
 
 
 Consequently we are technically not considering the full posterior
-distribution, but just its part with posisitive values.
-Altoight we still have to prove that there are no theoretical
-pitfalls, this naive approach seem to work reasonabily well.
+distribution, but just its part with posisitive values. It might open
+some theoretical issues that we have not yet carefully explored,
+but for this specific work our enphasis went on producing quick
+and effective results, postponing for the future a classic complete
+mathematical analysis.
 
 
-\begin{comment}
-We did not \emph{impose}
-any limitation on the parameter's domain: the chains
-were free to explore negative values, too (until the proposals
-were not inf or NaN), and we expected the chain to authomatically
-reject these values due to possibly worse Likelihood' values.
-It was almost always the case, but \emph{very surprisingly}
-sometimes negative values for $v$ were preferred!
-This is actually not something analytically forbidden, and we kept
-such results as an interesting emerging property.
-
-
-TO DO: STUDYING ANALYTICALLY WHAT HAPPENS WITH NEGATIVE V
-\end{comment}
-
-
-Dealing with the precise structure of the prior distribution and the
-chain's starting points, everything is clarified in the following lines.
 Remember that the role of $\rho$
 is to represent the expected range of the searched values.
 For simplicity we define it with an easy covariance form:
@@ -486,7 +472,8 @@ For simplicity we define it with an easy covariance form:
 	0 & 0 & \sigma_v^2
 \end{pmatrix}
 \end{equation}
-splitting so the prior into three independent one dimensional Gaussians for
+splitting so the prior into three independent one dimensional Gaussians,
+one for
 every parameters. Recall that if $X \sim N(0,\sigma^2)$, the classical
 quantile property claims 
 $\mathbb{P}[-2 \sigma \leq X \leq 2 \sigma] \geq 0.95$.
@@ -516,7 +503,9 @@ for every Markov Chain. Let $D$ be
 the least read data from the dataset, i.e. the current
 number of deaths.
 Not surprisingly, we initialize $x_0$ uniformly randomly in
-$[0, 1] \times [D, N_e] \times [0,1]$ coherently which the explanation above.
+$[0, 1] \times [D, N_e] \times [0,1]$, but we highlight how such a choice
+does not play an active role: we also tried with various intervals on 
+comparable ranges, and the results were the same (as it must be).
 
 
 \section{Numerical results}
@@ -535,69 +524,133 @@ came into play, waited around 15 days (incubation time, so to nullify
 the influence of the previous conditions), then we did predictions 
 using 1, 2 and 3 weeks of data. They are generally done by using 
 the days belonging to the first half of April, with the idea of lasting
-at least until the mid of May. Then all the Countries changed their
-policy. Therefore the idea is: if we manage to succed in predicting
+at least until the mid of May. 
+Then around the beginning of May all the Countries changed their
+policies. Therefore the idea is: if we manage to succed in predicting
 what happened in May by using the data in April, we can repat the same
 strategy concerning the month of June. 
 
 
-For each Country there is a dedicated section.
+For the sake of completeness, the 
+data are anyway pictured until the 1st of June instead of stopping at
+the mid of May.
+
+
 Recall that the fitting procedure is done my using a Bayesian algorithm,
 producing so a probability measure for the parameters. We split it in
 clusters producing multi dimensional histograms, and considered
-only the 95\% of its mass, eliminating so the very
+only the 99\% of its mass, eliminating so the very
 unlikely extreme value. We paid attention to
 the "worst" case scenario, i.e. the one with the highest number of deaths, 
-the "best", and, when possible, the expectation value.
+the "best", and the expectation value.
 
+
+The whole reasoning is repeated two times, using two different error
+tolerance for the given datset (roughly speaking, $10\%$ and $130\%$
+as explained in the section SEC).
+
+
+We started observing the German data from the $8th$ of April,
+the French from the $3rd$ and the Italian from the $1st$. 
+
+
+Summing up we have three predictions for each Country (according to the
+interpolated number of weeks), three Countries, and two error
+possibilities, producing so a total of 18 plots.
 
 \begin{figure}[h!]
   \centering
   \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/it/1-7/1-7.pdf}
+  \includegraphics[width=\linewidth]{../err10p_simulations/it/1-7/1-7.pdf}
   \end{subfigure}
   \begin{subfigure}[b]{0.45\linewidth}
-    \includegraphics[width=\linewidth]{../simulations/it/1-14/1-14.pdf}
+    \includegraphics[width=\linewidth]{../err10p_simulations/it/1-14/1-14.pdf}
   \end{subfigure}
   \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/it/1-21/1-21.pdf}
+  \includegraphics[width=\linewidth]{../err10p_simulations/it/1-21/1-21.pdf}
   \end{subfigure}
-	\caption{Italy - Lockdown measures were declared on the 15th of March.
-                We started gathering the data from the 1st of April.}
+	\caption{Italy - }
 \end{figure}
 
 
 \begin{figure}[h!]
   \centering
   \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/de/8-14/8-14.pdf}
+  \includegraphics[width=\linewidth]{../err10p_simulations/de/8-14/8-14.pdf}
   \end{subfigure}
   \begin{subfigure}[b]{0.45\linewidth}
-    \includegraphics[width=\linewidth]{../simulations/de/8-21/8-21.pdf}
+    \includegraphics[width=\linewidth]{../err10p_simulations/de/8-21/8-21.pdf}
   \end{subfigure}
   \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/de/8-28/8-28.pdf}
+  \includegraphics[width=\linewidth]{../err10p_simulations/de/8-28/8-28.pdf}
   \end{subfigure}
 	\caption{Germany -}
 \end{figure}
 
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-9/3-9.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+    \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-16/3-16.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-23/3-23.pdf}
+  \end{subfigure}
+	\caption{France - to write}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err100p_simulations/it/1-7/1-7.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+    \includegraphics[width=\linewidth]{../err100p_simulations/it/1-14/1-14.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err100p_simulations/it/1-21/1-21.pdf}
+  \end{subfigure}
+	\caption{Italy - }
+\end{figure}
 
 
 \begin{figure}[h!]
   \centering
   \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/fr/3-9/3-9.pdf}
+  \includegraphics[width=\linewidth]{../err100p_simulations/de/8-14/8-14.pdf}
   \end{subfigure}
   \begin{subfigure}[b]{0.45\linewidth}
-    \includegraphics[width=\linewidth]{../simulations/fr/3-16/3-16.pdf}
+    \includegraphics[width=\linewidth]{../err100p_simulations/de/8-21/8-21.pdf}
   \end{subfigure}
   \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../simulations/fr/3-23/3-23.pdf}
+  \includegraphics[width=\linewidth]{../err100p_simulations/de/8-28/8-28.pdf}
+  \end{subfigure}
+	\caption{Germany -}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err100p_simulations/fr/3-9/3-9.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+    \includegraphics[width=\linewidth]{../err100p_simulations/fr/3-16/3-16.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err100p_simulations/fr/3-23/3-23.pdf}
   \end{subfigure}
 	\caption{France - to write}
 \end{figure}
 
 
+\section{Conclusions}
+
+\end{document}
+
+
+\begin{comment}
 \begin{figure}[h!]
   \centering
   \begin{subfigure}[b]{0.45\linewidth}
@@ -612,7 +665,6 @@ the "best", and, when possible, the expectation value.
 	\caption{Spain - to write}
 \end{figure}
 
-\begin{comment}
 \begin{figure}[h!]
   \centering
   \begin{subfigure}[b]{0.45\linewidth}
@@ -628,4 +680,4 @@ the "best", and, when possible, the expectation value.
 \end{figure}
 \end{comment}
 
-\end{document}
+
