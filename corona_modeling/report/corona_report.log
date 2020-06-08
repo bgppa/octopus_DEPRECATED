@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.4.23)  28 MAY 2020 17:45
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.4.23)  8 JUN 2020 11:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -268,132 +268,178 @@ LaTeX Warning: No \author given.
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6]
-<../simulations/it/1-7/1-7.pdf, id=43, 642.4pt x 481.8pt>
-File: ../simulations/it/1-7/1-7.pdf Graphic file (type pdf)
-<use ../simulations/it/1-7/1-7.pdf>
-Package pdftex.def Info: ../simulations/it/1-7/1-7.pdf  used on input line 557.
+[7]
+<../err10p_simulations/it/1-7/1-7.pdf, id=47, 642.4pt x 481.8pt>
+File: ../err10p_simulations/it/1-7/1-7.pdf Graphic file (type pdf)
+<use ../err10p_simulations/it/1-7/1-7.pdf>
+Package pdftex.def Info: ../err10p_simulations/it/1-7/1-7.pdf  used on input li
+ne 571.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err10p_simulations/it/1-14/1-14.pdf, id=48, 642.4pt x 481.8pt>
+File: ../err10p_simulations/it/1-14/1-14.pdf Graphic file (type pdf)
+<use ../err10p_simulations/it/1-14/1-14.pdf>
+Package pdftex.def Info: ../err10p_simulations/it/1-14/1-14.pdf  used on input 
+line 574.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err10p_simulations/it/1-21/1-21.pdf, id=49, 642.4pt x 481.8pt>
+File: ../err10p_simulations/it/1-21/1-21.pdf Graphic file (type pdf)
+<use ../err10p_simulations/it/1-21/1-21.pdf>
+Package pdftex.def Info: ../err10p_simulations/it/1-21/1-21.pdf  used on input 
+line 577.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err10p_simulations/fr/3-9/3-9.pdf, id=50, 642.4pt x 481.8pt>
+File: ../err10p_simulations/fr/3-9/3-9.pdf Graphic file (type pdf)
+<use ../err10p_simulations/fr/3-9/3-9.pdf>
+Package pdftex.def Info: ../err10p_simulations/fr/3-9/3-9.pdf  used on input li
+ne 593.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err10p_simulations/fr/3-16/3-16.pdf, id=51, 642.4pt x 481.8pt>
+File: ../err10p_simulations/fr/3-16/3-16.pdf Graphic file (type pdf)
+<use ../err10p_simulations/fr/3-16/3-16.pdf>
+Package pdftex.def Info: ../err10p_simulations/fr/3-16/3-16.pdf  used on input 
+line 596.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err10p_simulations/fr/3-23/3-23.pdf, id=52, 642.4pt x 481.8pt>
+File: ../err10p_simulations/fr/3-23/3-23.pdf Graphic file (type pdf)
+<use ../err10p_simulations/fr/3-23/3-23.pdf>
+Package pdftex.def Info: ../err10p_simulations/fr/3-23/3-23.pdf  used on input 
+line 599.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
 
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/it/1-14/1-14.pdf, id=44, 642.4pt x 481.8pt>
-File: ../simulations/it/1-14/1-14.pdf Graphic file (type pdf)
-<use ../simulations/it/1-14/1-14.pdf>
-Package pdftex.def Info: ../simulations/it/1-14/1-14.pdf  used on input line 56
-0.
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/it/1-21/1-21.pdf, id=45, 642.4pt x 481.8pt>
-File: ../simulations/it/1-21/1-21.pdf Graphic file (type pdf)
-<use ../simulations/it/1-21/1-21.pdf>
-Package pdftex.def Info: ../simulations/it/1-21/1-21.pdf  used on input line 56
-3.
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-<../simulations/de/8-14/8-14.pdf, id=46, 642.4pt x 481.8pt>
-File: ../simulations/de/8-14/8-14.pdf Graphic file (type pdf)
-<use ../simulations/de/8-14/8-14.pdf>
-Package pdftex.def Info: ../simulations/de/8-14/8-14.pdf  used on input line 57
-3.
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/de/8-21/8-21.pdf, id=47, 642.4pt x 481.8pt>
-File: ../simulations/de/8-21/8-21.pdf Graphic file (type pdf)
-<use ../simulations/de/8-21/8-21.pdf>
-Package pdftex.def Info: ../simulations/de/8-21/8-21.pdf  used on input line 57
-6.
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/de/8-28/8-28.pdf, id=48, 642.4pt x 481.8pt>
-File: ../simulations/de/8-28/8-28.pdf Graphic file (type pdf)
-<use ../simulations/de/8-28/8-28.pdf>
-Package pdftex.def Info: ../simulations/de/8-28/8-28.pdf  used on input line 57
-9.
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<../simulations/fr/3-9/3-9.pdf, id=49, 642.4pt x 481.8pt>
-File: ../simulations/fr/3-9/3-9.pdf Graphic file (type pdf)
-<use ../simulations/fr/3-9/3-9.pdf>
-Package pdftex.def Info: ../simulations/fr/3-9/3-9.pdf  used on input line 589.
-
+<../err10p_simulations/de/8-14/8-14.pdf, id=53, 642.4pt x 481.8pt>
+File: ../err10p_simulations/de/8-14/8-14.pdf Graphic file (type pdf)
+<use ../err10p_simulations/de/8-14/8-14.pdf>
+Package pdftex.def Info: ../err10p_simulations/de/8-14/8-14.pdf  used on input 
+line 613.
 (pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/fr/3-16/3-16.pdf, id=50, 642.4pt x 481.8pt>
-File: ../simulations/fr/3-16/3-16.pdf Graphic file (type pdf)
-<use ../simulations/fr/3-16/3-16.pdf>
-Package pdftex.def Info: ../simulations/fr/3-16/3-16.pdf  used on input line 59
-2.
+<../err10p_simulations/de/8-21/8-21.pdf, id=54, 642.4pt x 481.8pt>
+File: ../err10p_simulations/de/8-21/8-21.pdf Graphic file (type pdf)
+<use ../err10p_simulations/de/8-21/8-21.pdf>
+Package pdftex.def Info: ../err10p_simulations/de/8-21/8-21.pdf  used on input 
+line 616.
 (pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/fr/3-23/3-23.pdf, id=51, 642.4pt x 481.8pt>
-File: ../simulations/fr/3-23/3-23.pdf Graphic file (type pdf)
-<use ../simulations/fr/3-23/3-23.pdf>
-Package pdftex.def Info: ../simulations/fr/3-23/3-23.pdf  used on input line 59
-5.
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-<../simulations/sp/1-7/1-7.pdf, id=52, 642.4pt x 481.8pt>
-File: ../simulations/sp/1-7/1-7.pdf Graphic file (type pdf)
-<use ../simulations/sp/1-7/1-7.pdf>
-Package pdftex.def Info: ../simulations/sp/1-7/1-7.pdf  used on input line 604.
-
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/sp/1-14/1-14.pdf, id=53, 642.4pt x 481.8pt>
-File: ../simulations/sp/1-14/1-14.pdf Graphic file (type pdf)
-<use ../simulations/sp/1-14/1-14.pdf>
-Package pdftex.def Info: ../simulations/sp/1-14/1-14.pdf  used on input line 60
-7.
-(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
-<../simulations/sp/1-21/1-21.pdf, id=54, 642.4pt x 481.8pt>
-File: ../simulations/sp/1-21/1-21.pdf Graphic file (type pdf)
-<use ../simulations/sp/1-21/1-21.pdf>
-Package pdftex.def Info: ../simulations/sp/1-21/1-21.pdf  used on input line 61
-0.
+<../err10p_simulations/de/8-28/8-28.pdf, id=55, 642.4pt x 481.8pt>
+File: ../err10p_simulations/de/8-28/8-28.pdf Graphic file (type pdf)
+<use ../err10p_simulations/de/8-28/8-28.pdf>
+Package pdftex.def Info: ../err10p_simulations/de/8-28/8-28.pdf  used on input 
+line 619.
 (pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[7] [8 <../simulations/it/1-7/1-7.pdf> <../simulations/it/1-14/1-14.pdf> <../si
-mulations/it/1-21/1-21.pdf> <../simulations/de/8-14/8-14.pdf> <../simulations/d
-e/8-21/8-21.pdf> <../simulations/de/8-28/8-28.pdf>] [9 <../simulations/fr/3-9/3
--9.pdf> <../simulations/fr/3-16/3-16.pdf> <../simulations/fr/3-23/3-23.pdf> <..
-/simulations/sp/1-7/1-7.pdf> <../simulations/sp/1-14/1-14.pdf> <../simulations/
-sp/1-21/1-21.pdf>] (./corona_report.aux) ) 
+<../err100p_simulations/it/1-7/1-7.pdf, id=56, 642.4pt x 481.8pt>
+File: ../err100p_simulations/it/1-7/1-7.pdf Graphic file (type pdf)
+<use ../err100p_simulations/it/1-7/1-7.pdf>
+Package pdftex.def Info: ../err100p_simulations/it/1-7/1-7.pdf  used on input l
+ine 630.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err100p_simulations/it/1-14/1-14.pdf, id=57, 642.4pt x 481.8pt>
+File: ../err100p_simulations/it/1-14/1-14.pdf Graphic file (type pdf)
+<use ../err100p_simulations/it/1-14/1-14.pdf>
+Package pdftex.def Info: ../err100p_simulations/it/1-14/1-14.pdf  used on input
+ line 633.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err100p_simulations/it/1-21/1-21.pdf, id=58, 642.4pt x 481.8pt>
+File: ../err100p_simulations/it/1-21/1-21.pdf Graphic file (type pdf)
+<use ../err100p_simulations/it/1-21/1-21.pdf>
+Package pdftex.def Info: ../err100p_simulations/it/1-21/1-21.pdf  used on input
+ line 636.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<../err100p_simulations/de/8-14/8-14.pdf, id=59, 642.4pt x 481.8pt>
+File: ../err100p_simulations/de/8-14/8-14.pdf Graphic file (type pdf)
+<use ../err100p_simulations/de/8-14/8-14.pdf>
+Package pdftex.def Info: ../err100p_simulations/de/8-14/8-14.pdf  used on input
+ line 655.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err100p_simulations/de/8-21/8-21.pdf, id=60, 642.4pt x 481.8pt>
+File: ../err100p_simulations/de/8-21/8-21.pdf Graphic file (type pdf)
+<use ../err100p_simulations/de/8-21/8-21.pdf>
+Package pdftex.def Info: ../err100p_simulations/de/8-21/8-21.pdf  used on input
+ line 658.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err100p_simulations/de/8-28/8-28.pdf, id=61, 642.4pt x 481.8pt>
+File: ../err100p_simulations/de/8-28/8-28.pdf Graphic file (type pdf)
+<use ../err100p_simulations/de/8-28/8-28.pdf>
+Package pdftex.def Info: ../err100p_simulations/de/8-28/8-28.pdf  used on input
+ line 661.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<../err100p_simulations/fr/3-9/3-9.pdf, id=62, 642.4pt x 481.8pt>
+File: ../err100p_simulations/fr/3-9/3-9.pdf Graphic file (type pdf)
+<use ../err100p_simulations/fr/3-9/3-9.pdf>
+Package pdftex.def Info: ../err100p_simulations/fr/3-9/3-9.pdf  used on input l
+ine 674.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err100p_simulations/fr/3-16/3-16.pdf, id=63, 642.4pt x 481.8pt>
+File: ../err100p_simulations/fr/3-16/3-16.pdf Graphic file (type pdf)
+<use ../err100p_simulations/fr/3-16/3-16.pdf>
+Package pdftex.def Info: ../err100p_simulations/fr/3-16/3-16.pdf  used on input
+ line 677.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+<../err100p_simulations/fr/3-23/3-23.pdf, id=64, 642.4pt x 481.8pt>
+File: ../err100p_simulations/fr/3-23/3-23.pdf Graphic file (type pdf)
+<use ../err100p_simulations/fr/3-23/3-23.pdf>
+Package pdftex.def Info: ../err100p_simulations/fr/3-23/3-23.pdf  used on input
+ line 680.
+(pdftex.def)             Requested size: 155.24895pt x 116.43568pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[8 <../err10p_simulations/it/1-7/1-7.pdf> <../err10p_simulations/it/1-14/1-14.p
+df> <../err10p_simulations/it/1-21/1-21.pdf>] [9 <../err10p_simulations/fr/3-9/
+3-9.pdf> <../err10p_simulations/fr/3-16/3-16.pdf> <../err10p_simulations/fr/3-2
+3/3-23.pdf>] [10 <../err10p_simulations/de/8-14/8-14.pdf> <../err10p_simulation
+s/de/8-21/8-21.pdf> <../err10p_simulations/de/8-28/8-28.pdf>] [11 <../err100p_s
+imulations/it/1-7/1-7.pdf> <../err100p_simulations/it/1-14/1-14.pdf> <../err100
+p_simulations/it/1-21/1-21.pdf>] [12 <../err100p_simulations/de/8-14/8-14.pdf> 
+<../err100p_simulations/de/8-21/8-21.pdf> <../err100p_simulations/de/8-28/8-28.
+pdf>] [13 <../err100p_simulations/fr/3-9/3-9.pdf> <../err100p_simulations/fr/3-
+16/3-16.pdf> <../err100p_simulations/fr/3-23/3-23.pdf>] (./corona_report.aux) )
+ 
 Here is how much of TeX's memory you used:
- 3664 strings out of 494871
- 55021 string characters out of 6178382
- 110981 words of memory out of 5000000
- 6925 multiletter control sequences out of 15000+600000
- 14850 words of font info for 55 fonts, out of 8000000 for 9000
+ 3704 strings out of 494871
+ 56949 string characters out of 6178382
+ 112981 words of memory out of 5000000
+ 6955 multiletter control sequences out of 15000+600000
+ 16441 words of font info for 61 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 42i,8n,40p,302b,371s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/share/texlive/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/
-public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmbx9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfon
-ts/cm/cmbxti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
-m/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi
-10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb>
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/s
-hare/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/te
-xlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/t
-exmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-di
-st/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/font
-s/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1
-/public/amsfonts/cm/cmr5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/
-amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8
-.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></u
-sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/sha
-re/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texl
-ive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dis
-t/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/public/amsfonts/symbols/msbm7.pfb>
-Output written on corona_report.pdf (9 pages, 414799 bytes).
+ 42i,8n,40p,765b,371s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb></usr/share/texlive/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/font
+s/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texlive/texmf-dist/fonts/type1
+/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public
+/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mmi9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pf
+b></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr
+/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/texlive/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cms
+y8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb
+></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/s
+hare/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm7.pfb>
+Output written on corona_report.pdf (13 pages, 517314 bytes).
 PDF statistics:
- 251 PDF objects out of 1000 (max. 8388607)
- 178 compressed objects within 2 object streams
+ 333 PDF objects out of 1000 (max. 8388607)
+ 235 compressed objects within 3 object streams
  0 named destinations out of 1000 (max. 500000)
- 61 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 91 words of extra memory for PDF output out of 10000 (max. 10000000)
 

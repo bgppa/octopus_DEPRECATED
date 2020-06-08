@@ -4,8 +4,8 @@ echo "
 set title 'Germany: prediction until 01.06 using 2 weeks of data.' font ',11'
 set xlabel 'days [8 < April < 30]'
 set ylabel 'deceased people'
-set ytic 2000
-set xtic 4
+set ytic 3000
+set xtic 10
 set grid
 set xrange[8:62]
 set key right bottom

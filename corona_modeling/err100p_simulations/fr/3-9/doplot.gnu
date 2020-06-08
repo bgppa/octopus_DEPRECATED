@@ -5,7 +5,7 @@ set title 'France: prediction until 01.06 using 1 week of data.' font ',11'
 set xlabel 'days [3 < April < 30]'
 set ylabel 'deceased people'
 set ytic 100000
-set xtic 4
+set xtic 10
 set grid
 set xrange[3:62]
 set key left top

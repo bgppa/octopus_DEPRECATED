@@ -21,38 +21,37 @@ general logistic model with the pCN Monte Carlo sampling}
 \begin{document}
 \maketitle
 \section{Introduction}
-A simply effective way to quantify an epidemic
-impact, is given by counting the number of deaths.
-We are interested in using that number
-to better understand in which scenario we are likely to fall 
-in the short and long term future.
-
-
-To model the number of victims in time, we choose
+A simply and effective way to quantify the impact of an epidemic
+is given by counting its number of victims.
+To model its variation in time, we choose
 a generalized logistic map $X^P(t)$ governed by an unknown parameter 
-$P \in \mathbb{R}^3$. Then, by using the Preconditioned Crank-Nicolson
-MCMC method on the available data,
-we establish what are the various possibilities
-for the  
-values of $P$. Finally, by using the just learned values,
-inserting them into model gives the various possibilities
-for the number of victims in the upcoming future.
+$P \in \mathbb{R}^3$. We assume that, when put into the model,
+the "true" $P$ is capable of coherently fit the past number of
+victims, as well as predict its future evolution.
 
 
-Concretely speaking, we work with threeEuropean Countries
-(Italy, Germany, France) and our final
-goal is to answer to the question:
-under the assumptions above,
-\textbf{
-how many $n$ weeks of data do we need if we want to produce a prediction 
-lasting for (at least) the next $m$ weeks}?
+Instead of looking for a single precise value, we rely on
+the Preconditioned Crank-Nicolson Monte Carlo method
+to establish a multitude of candidates for $P$, 
+each capable of describing a possible future scenario.
+We try to establish a "worst", a "best" and an "expected"
+case in which we are likely to go.
+
+
+We work with three European Countries
+(Italy, Germany, France) and our final question is:
+\emph{under the assumptions above},
+how many weeks of data do we need to correctly predict 
+the number of victims for (approximately) at least one future month?
 
 
 We conclude remarking the importance of measurements errors,
-showing how they are possibly much lower for the case of Italy.
-Our results suggest that the predictions done by using the first
-three weeks of April are surprisingly still valid today,
-the 1st of June.
+showing how they are \emph{probably} lower in the case of Italy and France.
+Successful predictions until the mid of May by using the first three
+weeks of April are shown. Surprisingly, they are still remaining
+valid (today being the 1st of June) despite the change of
+lockdown measures in all the considered Countries (the virus
+incubation time being already included in the computations).
 
 \section {The generalized logistic model}
 We choose to model the number of deaths in time with a
@@ -83,7 +82,7 @@ with closed form solution:
 	X(t) = \frac{Q} { (1 + A \exp[-q t])^{\frac{1}{v}}}
 \end{equation}
 
-for three \emph{stricly positivive} real parameters, 
+for three \emph{strictly positive} real parameters, 
 $P = \{ q, Q, v\}$ and initial time zero condition $X_0$
 (we write $X(t) = X^P(t) = X^P_{X_0}(t)$ to stress this dependence).
 The letter $A$ abbreviates 
@@ -101,16 +100,16 @@ Its limit for $v \to 0^+$ produces the \emph{Gompertz} model,
 while the case $v = 1$ the \emph{simple} logistic map.
 
 
-The simple logistic model suggest an interpretation for the quantity
-$q$, too. In such a case the equation would just be
+The simple logistic model suggests an interpretation for the quantity
+$q$, too. In such a case ($v=1$) the equation would be:
 \begin{equation}
 	X'(t) = q X(t) 
 	\left ( 1 - \left( \frac{X(t)}{Q} \right)\right )
 \end{equation}
 For very small time the value $X(t)$ is surely far lower than
-$Q$ (otherwise the system would already be in equilibrium), therefore
-we would have $X'(t) \approx q X(t)$, giving so
-$q$ as the rate of the starting exponential growth.
+$Q$ (otherwise the system would be already in equilibrium), therefore
+we would have $X'(t) \approx q X(t)$, reading
+$q$ as the rate of this starting exponential growth.
 
 
 \section{The bayesian approach}
@@ -144,31 +143,35 @@ we make, lies in the belief that the errors follow the
 Gaussian structure above. In principle, many other possibilities
 can be chosen.
 In practice, the choice above is pretty standard and 
-seems to work reasonabily well.
+seems to work reasonably well.
 In our numerical simulations we take into account two
-possible degree of trustness. In the \emph{reliable}
+possible degree of trust. In the \emph{reliable}
 case we consider the measurements
 to carry "up to a $10\%$ of error", in the sense that
 the "true" value at time $i$ is supposed to be likely in the interval
 $y_i \pm \frac{y_i}{10}$. In the \emph{unreliable}
-case, we increase such a value to around $130\%$.
+case, we increase such a level to $100\%$.
 Recalling that
 $\eta_i \sim N(0, \sigma_i^2) \implies 
 \mathbb{P}[ - 2 \sigma_i \leq \eta_i \leq 2 \sigma_i] \geq 95\%$, choosing
 then the standard deviation
 $\sigma_i \doteq \frac{y_i}{20}$ gives the $10\%$ error
-tolerance on $y_i$, while choosing $\sigma_i = \frac{y_i}{1.5}$
+tolerance on $y_i$, while choosing $\sigma_i = \frac{y_i}{2}$ covers
+the latter case \footnote{The second error is much bigger that the first,
+but still not huge enough to "destroy" the algorithm as we checked by
+running multiple simulations on toy models data.}.
 
 
-
-Intuitively speaking, fitting the model means to estimate
+Once that the model's structure is clarified,
+the next step is to actually estimate
 the unknown $P \in \mathbb{R}^3$ \emph{given} the observation of $\textbf{y}$.
 If we interpret $P$ as a random variable, it means that 
 the unknown quantity is given by the conditioned
 probability $\mathbb{P}[P | y]$.
 
 
-We start by choosing a \emph{prior} probability measure $\mathbb{P}[P]$ on 
+Following the traditional Bayesian approach, 
+we start by choosing a \emph{prior} probability measure $\mathbb{P}[P]$ on 
 $\mathbb{R}^3$, representing our blind guess about 
 $P$ \emph{independently} of the 
 observations $\textbf{y}$. In practice this is sometimes an hard guess
@@ -241,7 +244,7 @@ for instance, the mode can be read like "the most probably
 choice for $P$", its variance suggests how the uncertainty
 is spread, and similarly for other quantities.
 In principle one can analyze the posterior analytically,
-being explicitely given by formula NUMBER.
+being explicitly given by formula NUMBER.
 But usually it is too hard to be done with pen and paper.
 Our answer it to use numerical tools: first we
 produce a large amount of samples, then we analyze them
@@ -258,13 +261,13 @@ trajectory, or when the parameters $P$ belongs to
 an infinite dimensional Banach space, or simply in the context of
 PDEs inverse problems.
 None of them is our case, since we have just $P \in \mathbb{R}^3$ and
-only limited daily available data.
+only a daily limited amount of data.
 
 
 Therefore there is no solid a priori justification for this specific 
 Monte Carlo strategy, and one is free to choose another sampling method.
 We plan to test and study their various performances, but not now:
-since the final results here are reasonabily fine, we decided
+since the final results here are reasonably fine, we decided
 to keep this algorithm and leaving potential room for future improvement.
 
 
@@ -283,7 +286,7 @@ and set the \emph{exploratory} parameter $0 < \beta_{pcn} < 1$
 The pCN \emph{requires} the prior distribution $\rho(dx)$
 to be a \emph{centered} Gaussian, and used it as proposal step.
 This might be, in principle, a strong limitation: more comments about the
-prior will fillow in a dedicated section.
+prior will follow in a dedicated section.
 
 
 To produce a \textbf{single sample} from $\mu$, construct a chain 
@@ -308,7 +311,7 @@ $\{ x_i \} _{i \in \mathbb{N} }$ as follows:
 To avoid overflow problems, it is suggested to work with
 logarithms in the acceptance formula. Define
 $N$ to be the integer at which we (always) stop the chain,
-so that everytime that we start from a point $x_0$,
+so that every time that we start from a point $x_0$,
 the chain produces a sample
 $x_N$. The value for $N$ must
 be chosen in a way to overtake the known \emph{burning time} issue.
@@ -319,19 +322,17 @@ Repeating multiple times the algorithm with \emph{different} starting points
 $x_0$,
 we collect large amounts of samples, $2^{18} > 250000$ in our simulations.
 The \emph{correlation} between them, a typical issue when
-when using a single traditional Markov Chain,
-is therefore hopefully mitigated.
-Not how every chain istance can be executed independently,
-therefore the total sampling prodecure 
+when using a \emph{single} traditional Markov Chain,
+is therefore hopefully well mitigated by the use of multiple chains.
+Note how every chain can be executed independently,
+therefore the total sampling procedure 
 is suitable to parallelization
 (the user must be warned about the use of a proper seed).
 
 
 Concerning the conservative parameter $\beta$, it was usually tuned between
-$0.01$ and $0.001$, chosen in order to produce a chain with
+$0.01$ and $0.001$, choose in order to produce chains with
 an acceptance rate around $25\%$.
-
-
 Finally, we still have to comment the prior $\rho(dx)$ and
 the starting points $x_0$, but this will be done in a section later.
 
@@ -371,8 +372,8 @@ deceased people. We firstly use part of the available data at the beginning
 of April to predict the behavior until the mid of May (now known),
 with the intention of verifying them, and then
 repeating the same methodology for the month of June.
-As we briefly said in the introduction, different number of weeks
-are taken as input data, in order to observe their predictions' strenght.
+Different numbers of weeks
+are taken as input data in order to compare their prediction' strength.
 A lot of careful points must be checked.
 
 
@@ -420,7 +421,7 @@ Conversely, by adding some days of delay we can increase the
 possibility of not being in 2.
 Finally, dealing with the problem number 1,
 it is necessary to ensure that the skipped days 
-(e.g. including the one skypped in 2)
+(e.g. including the one skipped in 2)
 can actually be "forgotten".
 But when choosing an autonomous ODE, this is precisely what
 claimed by the semigroup property of its associated flow.
@@ -431,7 +432,7 @@ the trajectory produced from day $n+1$ (with initial
 conditions $V_{n+1}$) is precisely the same as the one
 produced by beginning at day $n$ (with initial condition $V_n$).
 The two trajectories \emph{are ruled by the same values of $P$},
-therefore they infere the same parameter $P$ (i.e. one can safely
+therefore they infer the same parameter $P$ (i.e. one can safely
 start the observations from the day $n+1$).
 Of course, one should not abuse this fact:
 the more are the observed data belonging the \emph{same}
@@ -442,22 +443,22 @@ improve the estimator's performance.
 
 
 \subsection{Choosing the prior distribution}
-The goal of this section is to explain in which way we chosen the
+The goal of this section is to explain in which way we choose the
 prior probability measure $\rho(dx)$ for $\mathcal{P} = \{q, Q, v\}$.
 Since we used the pCN MCMC, it is required to be a centered Gaussian. 
 It might represent
 a strong limitation, especially if we consider the fact
 that all the parameters in the general logistic equation
-are supposed to be positive. In order to cincumvent this problem,
+are supposed to be positive. In order to circumvent this problem,
 we tried with a very straightforward approach (and it worked):
 we started the chain always with positive values,
-and when negative are proposed, we simply discarded them.
+and when negative were proposed, we simply discarded them.
 
 
 Consequently we are technically not considering the full posterior
-distribution, but just its part with posisitive values. It might open
+distribution, but just its part with positive values. It might open
 some theoretical issues that we have not yet carefully explored,
-but for this specific work our enphasis went on producing quick
+but for this specific work our emphasis went on producing quick
 and effective results, postponing for the future a classic complete
 mathematical analysis.
 
@@ -480,17 +481,17 @@ $\mathbb{P}[-2 \sigma \leq X \leq 2 \sigma] \geq 0.95$.
 In the first section we recall how we prefer having $v \in [0,1]$, so by
 using the formula above we suggest $\sigma_v = 0.5$.
 
-We remind that $q$ is connected to the simple logistic's
+We remind that $q$ is connected to the simple logistics's
  starting exponential growth, while $Q$ 
 relates to the maximum number of possible cases. 
 Our idea is simple: as a first move,
 we do a rough exponential interpolation on the given dataset. 
 Since we always obtained very small exponential powers,
 we use this knowledge to set  $\sigma_q = 0.05$
-(altought we are using a general logistic map, and not just the
+(although we are using a general logistic map, and not just the
 simple logistic model).
 Furthermore, the exponential law gives a rough
-prediction about the number of the deaths around, say, the $20th$ of May
+prediction about the number of the deaths around, we fixed, the $20th$ of May
 (i.e. one Month after the datasets); call it $N_e$.
 We set $\sigma_Q = \frac{N_e}{2}$, in order to represent the idea
 "a good candidate for the true number of deceased people is likely
@@ -509,54 +510,60 @@ comparable ranges, and the results were the same (as it must be).
 
 
 \section{Numerical results}
-We took into account multiple European Countries with the idea of
-answering to the following question:
-supposing to be in a stable situation capable of avoiding
-an exponential explosion of the infection, how many weeks of data do we need
-before being able to perform realiable predictions concerning the
-number of deceased people?
-More precisely, for how many days do last the analysis done by using
-$n$ weeks of data?
+We took into account Italy, France and Germany with the idea of
+answering to the following question.
+Let's suppose to be in a stable non-exponential situation. 
+How many weeks of data do we need to perform a long-lasting prediction
+for the number of deaths?
 
 
 For each Country, we looked for the day when the lockdown measures
-came into play, waited around 15 days (incubation time, so to nullify
-the influence of the previous conditions), then we did predictions 
-using 1, 2 and 3 weeks of data. They are generally done by using 
-the days belonging to the first half of April, with the idea of lasting
-at least until the mid of May. 
-Then around the beginning of May all the Countries changed their
-policies. Therefore the idea is: if we manage to succed in predicting
-what happened in May by using the data in April, we can repat the same
+started, and then waited around 15 days (i.e. the virus
+incubation time, in order to counterbalance potential influence of the
+past). 
+From such a day we perform the predictions 
+using initially 1, then 2 and finally 3 weeks of data,
+trying to estimate the number of victims for at least others 3-4 weeks. 
+Since the starting time is always around the
+beginning of April, it means that 
+we try to predict until the mid
+of May, which is furthermore the day when the Countries changed their
+policies.
+
+
+Summing up, the idea is:
+if we manage to succeed in predicting
+what happened in May by using the data in April, we can repeat the same
 strategy concerning the month of June. 
 
 
 For the sake of completeness, the 
 data are anyway pictured until the 1st of June instead of stopping at
-the mid of May.
+the mid of May, to point out the effects of changing the lockdown regimes.
 
 
-Recall that the fitting procedure is done my using a Bayesian algorithm,
-producing so a probability measure for the parameters. We split it in
-clusters producing multi dimensional histograms, and considered
+Recall that the fitting procedure is done by using a Bayesian algorithm,
+producing so a probability measure for the parameters. We split its density
+into clusters, producing multi dimensional histograms, and considered
 only the 99\% of its mass, eliminating so the very
 unlikely extreme value. We paid attention to
 the "worst" case scenario, i.e. the one with the highest number of deaths, 
-the "best", and the expectation value.
+the "best" one, and the expectation value.
 
 
 The whole reasoning is repeated two times, using two different error
-tolerance for the given datset (roughly speaking, $10\%$ and $130\%$
-as explained in the section SEC).
+tolerance for the given dataset (roughly speaking, $10\%$ and $100\%$
+as explained in details in the section SEC).
 
 
 We started observing the German data from the $8th$ of April,
 the French from the $3rd$ and the Italian from the $1st$. 
 
 
-Summing up we have three predictions for each Country (according to the
-interpolated number of weeks), three Countries, and two error
-possibilities, producing so a total of 18 plots.
+Summing up, we have three predictions for each Country (using 
+1,2,3 weeks of data), 
+three Countries (Italy, France, Germany), and two error
+possibilities ($10\%$, $100\%$), producing therefore a total of 18 plots.
 
 \begin{figure}[h!]
   \centering
@@ -569,7 +576,34 @@ possibilities, producing so a total of 18 plots.
   \begin{subfigure}[b]{0.45\linewidth}
   \includegraphics[width=\linewidth]{../err10p_simulations/it/1-21/1-21.pdf}
   \end{subfigure}
-	\caption{Italy - }
+	\caption{Italy - plot with the $10\%$ of "error". Using 1 or 2 weeks
+	of data seems not enough, but with 3 weeks the results are
+	far better. The real data start slightly
+	exceeding the worst-case-scenario
+	from day $45$, i.e. the $15th$ of May. 
+	It can probably be read as a sign
+	of weakening the lockdown measures. Notably, the plot
+	is surprisingly "valid" until today, the 1st of June, far beyond
+	our initial expectations.}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-9/3-9.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+    \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-16/3-16.pdf}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\linewidth}
+  \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-23/3-23.pdf}
+  \end{subfigure}
+	\caption{France - plot with $10\%$ of "error". After one week of
+	data, the predictions are terrible, but they improve progressively when
+	using 2 and 3 weeks. Notably, as in the Italian case, the real
+	data slightly exceed the worst-case prediction around day $45$,
+	i.e. the $15$th of May, and are reasonably "valid" until
+	the $1$st of June.}
 \end{figure}
 
 
@@ -584,21 +618,10 @@ possibilities, producing so a total of 18 plots.
   \begin{subfigure}[b]{0.45\linewidth}
   \includegraphics[width=\linewidth]{../err10p_simulations/de/8-28/8-28.pdf}
   \end{subfigure}
-	\caption{Germany -}
-\end{figure}
-
-\begin{figure}[h!]
-  \centering
-  \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-9/3-9.pdf}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.45\linewidth}
-    \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-16/3-16.pdf}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.45\linewidth}
-  \includegraphics[width=\linewidth]{../err10p_simulations/fr/3-23/3-23.pdf}
-  \end{subfigure}
-	\caption{France - to write}
+	\caption{Germany - plot with $10\%$ of "error". Interestingly, the worst
+	results are plotted with 1 \emph{and} 3 weeks of data, being
+	acceptable when using only 2 weeks. This model does not seem
+	to work well with Germany.}
 \end{figure}
 
 \begin{figure}[h!]
@@ -612,7 +635,17 @@ possibilities, producing so a total of 18 plots.
   \begin{subfigure}[b]{0.45\linewidth}
   \includegraphics[width=\linewidth]{../err100p_simulations/it/1-21/1-21.pdf}
   \end{subfigure}
-	\caption{Italy - }
+	\caption{Italy - plot with a tolerance "error" of $100\%$ (to be
+	interpreted as pointed out in section SEC). Notably, the results
+	after 1 and 2 weeks are improved, although the latter seem
+	worse than the former. But the great news come when using 3
+	weeks of data: not only the plot is positively similar to the previous
+	case, but the real does not seem to exceed the worst-case-scenario.
+	Of course, one should not exaggerate and take into account possible
+	approximation errors due to the very subtle figure.
+	It is extremely surprisingly to see such a clear pattern
+	lasting until the $1$of June, although drastic lockdown
+	changes happened meanwhile.}
 \end{figure}
 
 
@@ -627,7 +660,12 @@ possibilities, producing so a total of 18 plots.
   \begin{subfigure}[b]{0.45\linewidth}
   \includegraphics[width=\linewidth]{../err100p_simulations/de/8-28/8-28.pdf}
   \end{subfigure}
-	\caption{Germany -}
+	\caption{Germany - plot with $100\%$ of tolerance "error". If using
+	1 or 2 weeks the predictions remain unreliable, but the surprise comes
+	when interpolating 3 weeks.
+	Now the future real data fit very well into the predicted pattern.
+	An increasing trend is registered in the recent period,
+	possibly associated with the weakening of lockdown measures.}
 \end{figure}
 
 \begin{figure}[h!]
@@ -641,11 +679,43 @@ possibilities, producing so a total of 18 plots.
   \begin{subfigure}[b]{0.45\linewidth}
   \includegraphics[width=\linewidth]{../err100p_simulations/fr/3-23/3-23.pdf}
   \end{subfigure}
-	\caption{France - to write}
+	\caption{France - plot with "error" tolerance to $100\%$. Precisely
+	as in the case of Italy, the plots are similar to the $10\%$ case
+	with generic sign of improvements. The best (and working)
+	results are obtained with 3 weeks of data.}
 \end{figure}
 
 
 \section{Conclusions}
+We used a Monte Carlo technique combined with a general logistic equation
+to predict the number of deaths from Coronavirus in Italy, Germany and
+France. In particular, the algorithm required a parameter connected
+to the measurement error. When tuned to $10\%$, 3 weeks of data allowed
+"reasonably" fine predictions for Italy and France, but not for
+Germany. By increasing it to $100\%$, not only 
+the results for Germany are working quite well,
+but there is a general improvements for Italy and France, too.
+It can of course suggest that Germany carries higher measurements errors,
+but we remark how the model is very
+experimental and based on multiple assumptions. They can just
+hold "better" for France and Italy rather than for Germany, 
+with their effects influenced by the error parameters.
+
+
+Using 1 or 2 weeks of data
+didn't seem to be a good strategy at all, 
+producing both strong under- and over- estimations.
+
+
+Therefore we speculate that: by using the algorithm explained in this review,
+with 3 weeks of data and a $100\%$ "error",
+it is possible to successfully predict the number of
+victims in Italy, Germany and France for the duration of minimum 1 month.
+
+
+Our next step will be to gathering of data from the $20th$ of May to
+the $9th$ of June, computing then new estimations until the mid of
+July.
 
 \end{document}
 

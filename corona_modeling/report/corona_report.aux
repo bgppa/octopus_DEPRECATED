@@ -2,13 +2,16 @@
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}}
 \@writefile{toc}{\contentsline {section}{\numberline {2}The generalized logistic model}{1}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}The bayesian approach}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}The Preconditioned Crank-Nicolson MCMC}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}The Preconditioned Crank-Nicolson MCMC}{4}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Tuning the remaining parameters}{5}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Comments on the assumptions and methodology}{5}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Why choosing an autonomous ODE}{5}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Choosing the prior distribution}{6}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Numerical results}{7}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Italy - Lockdown measures were declared on the 15th of March. We started gathering the data from the 1st of April.\relax }}{8}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Germany -\relax }}{8}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces France - to write\relax }}{9}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Spain - to write\relax }}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Italy - plot with the $10\%$ of "error". Using 1 or 2 weeks of data seems not enough, but with 3 weeks the results are far better. The real data start slightly exceeding the worst-case-scenario from day $45$, i.e. the $15th$ of May. It can probably be read as a sign of weakening the lockdown measures. Notably, the plot is surprisingly "valid" until today, the 1st of June, far beyond our initial expectations.\relax }}{8}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces France - plot with $10\%$ of "error". After one week of data, the predictions are terrible, but they improve progressively when using 2 and 3 weeks. Notably, as in the Italian case, the real data slightly exceed the worst-case prediction around day $45$, i.e. the $15$th of May, and are reasonably "valid" until the $1$st of June.\relax }}{9}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusions}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Germany - plot with $10\%$ of "error". Interestingly, the worst results are plotted with 1 \emph  {and} 3 weeks of data, being acceptable when using only 2 weeks. This model does not seem to work well with Germany.\relax }}{10}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Italy - plot with a tolerance "error" of $100\%$ (to be interpreted as pointed out in section SEC). Notably, the results after 1 and 2 weeks are improved, although the latter seem worse than the former. But the great news come when using 3 weeks of data: not only the plot is positively similar to the previous case, but the real does not seem to exceed the worst-case-scenario. Of course, one should not exaggerate and take into account possible approximation errors due to the very subtle figure. It is extremely surprisingly to see such a clear pattern lasting until the $1$of June, although drastic lockdown changes happened meanwhile.\relax }}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Germany - plot with $100\%$ of tolerance "error". If using 1 or 2 weeks the predictions remain unreliable, but the surprise comes when interpolating 3 weeks. Now the future real data fit very well into the predicted pattern. An increasing trend is registered in the recent period, possibly associated with the weakening of lockdown measures.\relax }}{12}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces France - plot with "error" tolerance to $100\%$. Precisely as in the case of Italy, the plots are similar to the $10\%$ case with generic sign of improvements. The best (and working) results are obtained with 3 weeks of data.\relax }}{13}}
